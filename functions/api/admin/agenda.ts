@@ -68,10 +68,11 @@ async function viaApi(env: AEnv) {
 }
 
 export const onRequestGet: PagesFunction<AEnv> = async ({ env }) => {
+  let erreurApi = "";
   if (gcalActif(env)) {
     try { return json({ items: await viaApi(env), configure: true, ecriture: true }); }
-    catch (e) { if (!env.GCAL_ICS_URL) return json({ error: (e as Error).message }, 502); }
-  }
+    catch (e) { erreurApi = (e as Error).message; if (!env.GCAL_ICS_URL) return json({ error: erreurApi }, 502); }
+  } else erreurApi = `API non configurée (GCAL_SA_JSON ${env.GCAL_SA_JSON ? "présent" : "absent"}, GCAL_ID ${env.GCAL_ID ? "présent" : "absent"})`;
   if (!env.GCAL_ICS_URL) return json({ items: [], configure: false });
   const r = await fetch(env.GCAL_ICS_URL, { cf: { cacheTtl: 300 } } as RequestInit);
   if (!r.ok) return json({ error: "Agenda Google inaccessible." }, 502);
@@ -102,7 +103,7 @@ export const onRequestGet: PagesFunction<AEnv> = async ({ env }) => {
   const min = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
   const max = new Date(Date.now() + 180 * 864e5).toISOString().slice(0, 10);
   const items = out.filter((e) => e.debut.slice(0, 10) >= min && e.debut.slice(0, 10) <= max).sort((a, b) => a.debut.localeCompare(b.debut));
-  return json({ items, configure: true });
+  return json({ items, configure: true, erreurApi });
 };
 
 // Création d'un événement : { titre, date, debut?, fin?, journee, lieu?, description?, chaqueSemaineJusqua? }

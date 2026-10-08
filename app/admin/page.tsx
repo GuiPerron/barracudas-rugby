@@ -429,9 +429,9 @@ type Item = { cle: string; jour: string; heure?: string; titre: string; type: "a
 const MOIS_FR = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
 
 function Calendrier({ taches, comm, aller }: { taches: Tache[]; comm: Commandite[]; aller: (o: Onglet) => void }) {
-  const [ag, setAg] = useState<{ items: AgendaEv[]; configure: boolean; ecriture?: boolean } | null>(null);
+  const [ag, setAg] = useState<{ items: AgendaEv[]; configure: boolean; ecriture?: boolean; erreurApi?: string } | null>(null);
   const [form, setForm] = useState<EvForm | null>(null);
-  const charger = useCallback(() => { api<{ items: AgendaEv[]; configure: boolean; ecriture?: boolean }>("/api/admin/agenda").then(setAg).catch(() => setAg({ items: [], configure: true })); }, []);
+  const charger = useCallback(() => { api<{ items: AgendaEv[]; configure: boolean; ecriture?: boolean; erreurApi?: string }>("/api/admin/agenda").then(setAg).catch(() => setAg({ items: [], configure: true })); }, []);
   const [mois, setMois] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [choix, setChoix] = useState<Item | null>(null);
   useEffect(() => { charger(); }, [charger]);
@@ -463,6 +463,7 @@ function Calendrier({ taches, comm, aller }: { taches: Tache[]; comm: Commandite
             : <a className="adm-btn line" href="https://calendar.google.com/" target="_blank" rel="noopener">+ Événement (Google Agenda)</a>}
         </div>
       </div>
+      {ag?.erreurApi && <p className="adm-alert">Création d’événements indisponible : {ag.erreurApi}</p>}
       {ag && !ag.configure && <p className="adm-alert" style={{ background: "#FFF4DE", color: "#7A4B00" }}>L’agenda Google n’est pas encore branché : ajoute le secret <b>GCAL_ICS_URL</b> dans Cloudflare. Les tâches et relances s’affichent déjà.</p>}
       <div className="adm-cal-wrap">
         <section className="adm-card adm-cal">
