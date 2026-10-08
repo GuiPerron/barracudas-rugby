@@ -583,3 +583,6 @@ a, button, .story, .tile, .ncard, .feat, .brief, .tierc { cursor: pointer }
 .adm-up .ti { font-size: 14px; color: var(--navy); font-weight: 600 }
 @media (max-width: 1000px) { .adm-cal-wrap { grid-template-columns: 1fr } .adm-cal-day { min-height: 64px } .adm-ev { font-size: 0; padding: 0; height: 6px } .adm-legend { display: none } }
 @media (max-width: 1000px) { .adm-cal-wrap { grid-template-columns: minmax(0,1fr) } .adm-cal header h2 { min-width: 0; font-size: 15px } .adm-cal { padding: 12px } }
+.adm-check { display: flex !important; flex-direction: row; align-items: center; gap: 8px !important; font-weight: 600; align-self: end; padding-bottom: 10px }
+.adm-check input { width: 18px; height: 18px; padding: 0 }
+.adm-cal-day.ajout { cursor: copy } .adm-cal-day.ajout:hover { background: #F3F8FC }

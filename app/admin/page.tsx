@@ -424,21 +424,23 @@ function FormCommandite({ init, onSave, onDelete }: { init: Partial<Commandite>;
 }
 
 /* ---------------- Calendrier (Google Agenda + échéances + relances) ---------------- */
-type AgendaEv = { uid: string; titre: string; debut: string; fin?: string; journee: boolean; lieu?: string; description?: string };
-type Item = { cle: string; jour: string; heure?: string; titre: string; type: "agenda" | "tache" | "relance"; detail?: string; onClick?: () => void };
+type AgendaEv = { uid: string; titre: string; debut: string; fin?: string; journee: boolean; lieu?: string; description?: string; id?: string; recurrent?: boolean };
+type Item = { cle: string; jour: string; heure?: string; titre: string; type: "agenda" | "tache" | "relance"; detail?: string; onClick?: () => void; ev?: AgendaEv };
 const MOIS_FR = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
 
 function Calendrier({ taches, comm, aller }: { taches: Tache[]; comm: Commandite[]; aller: (o: Onglet) => void }) {
-  const [ag, setAg] = useState<{ items: AgendaEv[]; configure: boolean } | null>(null);
+  const [ag, setAg] = useState<{ items: AgendaEv[]; configure: boolean; ecriture?: boolean } | null>(null);
+  const [form, setForm] = useState<EvForm | null>(null);
+  const charger = useCallback(() => { api<{ items: AgendaEv[]; configure: boolean; ecriture?: boolean }>("/api/admin/agenda").then(setAg).catch(() => setAg({ items: [], configure: true })); }, []);
   const [mois, setMois] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [choix, setChoix] = useState<Item | null>(null);
-  useEffect(() => { api<{ items: AgendaEv[]; configure: boolean }>("/api/admin/agenda").then(setAg).catch(() => setAg({ items: [], configure: true })); }, []);
+  useEffect(() => { charger(); }, [charger]);
   const loc = (iso: string) => { const d = new Date(iso); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
   const items: Item[] = ([
     ...(ag?.items ?? []).map((e): Item => {
       const jour = e.journee ? e.debut.slice(0, 10) : loc(e.debut);
       const heure = e.journee ? undefined : new Date(e.debut).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
-      return { cle: "a" + e.uid, jour, heure, titre: e.titre, type: "agenda" as const, detail: [e.lieu, e.description].filter(Boolean).join(" · ") };
+      return { cle: "a" + e.uid, jour, heure, titre: e.titre, type: "agenda" as const, detail: [e.lieu, e.description].filter(Boolean).join(" · "), ev: e };
     }),
     ...taches.filter((t) => t.echeance && t.statut !== "fait").map((t) => ({ cle: "t" + t.id, jour: t.echeance!, titre: t.titre, type: "tache" as const, detail: t.responsable ? `Échéance · ${t.responsable}` : "Échéance", onClick: () => aller("taches") })),
     ...comm.filter((c) => c.prochaine_date && !["refuse", "logo_recu"].includes(c.statut)).map((c) => ({ cle: "c" + c.id, jour: c.prochaine_date!, titre: `${c.prochaine_action || "Relance"} · ${c.entreprise}`, type: "relance" as const, detail: c.responsable, onClick: () => aller("commandites") })),
@@ -456,7 +458,9 @@ function Calendrier({ taches, comm, aller }: { taches: Tache[]; comm: Commandite
         <h1>Calendrier</h1>
         <div className="adm-actions">
           <span className="adm-legend"><i className="lg-agenda" />Agenda du club <i className="lg-tache" />Tâches <i className="lg-relance" />Relances</span>
-          <a className="adm-btn line" href="https://calendar.google.com/" target="_blank" rel="noopener">+ Événement (Google Agenda)</a>
+          {ag?.ecriture
+            ? <button className="adm-btn" onClick={() => setForm({ titre: "", date: today(), debut: "19:00", fin: "20:30", journee: false })}>+ Nouvel événement</button>
+            : <a className="adm-btn line" href="https://calendar.google.com/" target="_blank" rel="noopener">+ Événement (Google Agenda)</a>}
         </div>
       </div>
       {ag && !ag.configure && <p className="adm-alert" style={{ background: "#FFF4DE", color: "#7A4B00" }}>L’agenda Google n’est pas encore branché : ajoute le secret <b>GCAL_ICS_URL</b> dans Cloudflare. Les tâches et relances s’affichent déjà.</p>}
@@ -474,7 +478,8 @@ function Calendrier({ taches, comm, aller }: { taches: Tache[]; comm: Commandite
               const k = iso(d);
               const du = items.filter((x) => x.jour === k);
               return (
-                <div key={k} className={"adm-cal-day" + (d.getMonth() !== mois.getMonth() ? " autre" : "") + (k === tj ? " auj" : "")}>
+                <div key={k} className={"adm-cal-day" + (d.getMonth() !== mois.getMonth() ? " autre" : "") + (k === tj ? " auj" : "") + (ag?.ecriture ? " ajout" : "")}
+                  onClick={(e) => { if (ag?.ecriture && e.target === e.currentTarget) setForm({ titre: "", date: k, debut: "19:00", fin: "20:30", journee: false }); }}>
                   <span className="n">{d.getDate()}</span>
                   {du.slice(0, 3).map((x) => (
                     <button key={x.cle} className={"adm-ev ev-" + x.type + (x.type !== "agenda" && x.jour < tj ? " late" : "")} onClick={() => setChoix(x)} title={x.titre}>
@@ -508,12 +513,84 @@ function Calendrier({ taches, comm, aller }: { taches: Tache[]; comm: Commandite
             {choix.detail && <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.5 }}>{choix.detail}</p>}
             <div className="adm-form-actions">
               {choix.onClick ? <button className="adm-btn" onClick={() => { setChoix(null); choix.onClick!(); }}>Ouvrir {choix.type === "tache" ? "les tâches" : "les commanditaires"}</button>
-                : <a className="adm-btn" href="https://calendar.google.com/" target="_blank" rel="noopener">Ouvrir Google Agenda</a>}
+                : ag?.ecriture && choix.ev?.id
+                  ? <button className="adm-btn" onClick={() => { const e = choix.ev!; setChoix(null); setForm(versForm(e)); }}>Modifier</button>
+                  : <a className="adm-btn" href="https://calendar.google.com/" target="_blank" rel="noopener">Ouvrir Google Agenda</a>}
             </div>
           </div>
         </Tiroir>
       )}
+      {form && (
+        <Tiroir titre={form.id ? "Modifier l’événement" : "Nouvel événement"} fermer={() => setForm(null)}>
+          <FormEvenement init={form} fermer={() => setForm(null)} apres={() => { setForm(null); charger(); }} />
+        </Tiroir>
+      )}
     </>
+  );
+}
+
+type EvForm = { id?: string; recurrent?: boolean; titre: string; date: string; debut?: string; fin?: string; journee: boolean; lieu?: string; description?: string; chaqueSemaineJusqua?: string; serie?: boolean };
+function versForm(e: AgendaEv): EvForm {
+  const hm = (iso?: string) => { if (!iso || e.journee) return undefined; const d = new Date(iso); return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; };
+  const jour = e.journee ? e.debut.slice(0, 10) : (() => { const d = new Date(e.debut); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; })();
+  return { id: e.id, recurrent: e.recurrent, titre: e.titre, date: jour, debut: hm(e.debut), fin: hm(e.fin), journee: e.journee, lieu: e.lieu, description: e.description?.replace(/\n*Ajouté depuis l’admin par .*$/s, "") };
+}
+
+function FormEvenement({ init, fermer, apres }: { init: EvForm; fermer: () => void; apres: () => void }) {
+  const [f, setF] = useState<EvForm>(init);
+  const [repete, setRepete] = useState(false);
+  const [envoi, setEnvoi] = useState(false);
+  const [err, setErr] = useState("");
+  const s = (k: keyof EvForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setF({ ...f, [k]: e.target.value });
+  async function enregistrer(e: React.FormEvent) {
+    e.preventDefault(); setEnvoi(true); setErr("");
+    try {
+      const corps = { ...f, chaqueSemaineJusqua: repete ? f.chaqueSemaineJusqua : undefined };
+      if (f.id) await api(`/api/admin/agenda/${encodeURIComponent(f.id)}`, { method: "PATCH", body: JSON.stringify(corps) });
+      else await api("/api/admin/agenda", { method: "POST", body: JSON.stringify(corps) });
+      apres();
+    } catch (x) { setErr((x as Error).message); }
+    setEnvoi(false);
+  }
+  async function supprimer() {
+    if (!f.id) return;
+    const serie = f.recurrent && confirm("Supprimer toute la série ? (OK = toute la série, Annuler = seulement cette date)");
+    if (!f.recurrent && !confirm("Supprimer cet événement de l’agenda du club ?")) return;
+    setEnvoi(true);
+    try { await api(`/api/admin/agenda/${encodeURIComponent(f.id)}${serie ? "?serie=1" : ""}`, { method: "DELETE" }); apres(); }
+    catch (x) { setErr((x as Error).message); setEnvoi(false); }
+  }
+  return (
+    <form className="adm-form" onSubmit={enregistrer}>
+      <label>Titre *<input value={f.titre} onChange={s("titre")} required autoFocus placeholder="ex. Rencontre du CA" /></label>
+      <div className="adm-row">
+        <label>Date *<input type="date" value={f.date} onChange={s("date")} required /></label>
+        <label className="adm-check"><input type="checkbox" checked={f.journee} onChange={(e) => setF({ ...f, journee: e.target.checked })} /> Toute la journée</label>
+      </div>
+      {!f.journee && (
+        <div className="adm-row">
+          <label>Début<input type="time" value={f.debut ?? ""} onChange={s("debut")} required /></label>
+          <label>Fin<input type="time" value={f.fin ?? ""} onChange={s("fin")} /></label>
+        </div>
+      )}
+      <label>Lieu<input value={f.lieu ?? ""} onChange={s("lieu")} placeholder="ex. Parc Côte à Gladu" /></label>
+      <label>Description<textarea value={f.description ?? ""} onChange={s("description")} rows={4} /></label>
+      {!f.id && (
+        <div className="adm-row">
+          <label className="adm-check"><input type="checkbox" checked={repete} onChange={(e) => setRepete(e.target.checked)} /> Chaque semaine</label>
+          {repete && <label>Jusqu’au<input type="date" value={f.chaqueSemaineJusqua ?? ""} onChange={s("chaqueSemaineJusqua")} required /></label>}
+        </div>
+      )}
+      {f.id && f.recurrent && (
+        <label className="adm-check"><input type="checkbox" checked={!!f.serie} onChange={(e) => setF({ ...f, serie: e.target.checked })} /> Appliquer le titre, le lieu et la description à toute la série</label>
+      )}
+      {err && <p className="adm-alert">{err}</p>}
+      <p className="adm-muted">L’événement est enregistré dans Google Agenda « Barracudas · Club » : tout le CA le voit, avec les rappels de l’agenda.</p>
+      <div className="adm-form-actions">
+        {f.id ? <button type="button" className="adm-btn danger line" onClick={supprimer} disabled={envoi}>Supprimer</button> : <button type="button" className="adm-btn line" onClick={fermer}>Annuler</button>}
+        <button className="adm-btn" disabled={envoi}>{envoi ? "Enregistrement…" : f.id ? "Enregistrer" : "Ajouter à l’agenda"}</button>
+      </div>
+    </form>
   );
 }
 

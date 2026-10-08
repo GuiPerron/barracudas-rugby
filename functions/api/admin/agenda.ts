@@ -1,9 +1,10 @@
 /// <reference types="@cloudflare/workers-types" />
 // Événements de Google Agenda « Barracudas · Club » via l'adresse iCal secrète (secret GCAL_ICS_URL).
 // Lecture seule. Renvoie les événements de -30 jours à +180 jours.
-import { json, type Env } from "../../../server/db";
+import { json, journal, type Env } from "../../../server/db";
+import { gcal, gcalActif, type GEnv, type GEvent } from "../../../server/gcal";
 
-type Ev = { uid: string; titre: string; debut: string; fin?: string; journee: boolean; lieu?: string; description?: string };
+type Ev = { uid: string; titre: string; debut: string; fin?: string; journee: boolean; lieu?: string; description?: string; id?: string; recurrent?: boolean };
 
 function deplier(ics: string) { return ics.replace(/\r?\n[ \t]/g, ""); }
 function val(l: string) { return l.slice(l.indexOf(":") + 1).replace(/\\n/g, "\n").replace(/\\,/g, ",").replace(/\;/g, ";"); }
@@ -46,7 +47,31 @@ function repeter(e: Ev, rule: string, ex: string[]): Ev[] {
   return res;
 }
 
-export const onRequestGet: PagesFunction<Env & { GCAL_ICS_URL?: string }> = async ({ env }) => {
+type AEnv = Env & GEnv & { GCAL_ICS_URL?: string };
+
+// Lecture via l'API (si le compte de service est configuré) : récurrences développées par Google, événements modifiables
+async function viaApi(env: AEnv) {
+  const min = new Date(Date.now() - 30 * 864e5).toISOString();
+  const max = new Date(Date.now() + 180 * 864e5).toISOString();
+  const items: Ev[] = [];
+  let page = "";
+  for (let i = 0; i < 5; i++) {
+    const j = await gcal(env, `/events?singleEvents=true&orderBy=startTime&maxResults=250&timeMin=${encodeURIComponent(min)}&timeMax=${encodeURIComponent(max)}${page ? "&pageToken=" + page : ""}`) as { items: GEvent[]; nextPageToken?: string };
+    for (const e of j.items) {
+      const journee = !!e.start.date;
+      items.push({ uid: e.id, id: e.id, titre: e.summary ?? "(sans titre)", debut: (e.start.date ?? e.start.dateTime)!, fin: e.end.date ?? e.end.dateTime, journee, lieu: e.location, description: e.description?.slice(0, 500), recurrent: !!e.recurringEventId });
+    }
+    if (!j.nextPageToken) break;
+    page = j.nextPageToken;
+  }
+  return items;
+}
+
+export const onRequestGet: PagesFunction<AEnv> = async ({ env }) => {
+  if (gcalActif(env)) {
+    try { return json({ items: await viaApi(env), configure: true, ecriture: true }); }
+    catch (e) { if (!env.GCAL_ICS_URL) return json({ error: (e as Error).message }, 502); }
+  }
   if (!env.GCAL_ICS_URL) return json({ items: [], configure: false });
   const r = await fetch(env.GCAL_ICS_URL, { cf: { cacheTtl: 300 } } as RequestInit);
   if (!r.ok) return json({ error: "Agenda Google inaccessible." }, 502);
@@ -78,4 +103,33 @@ export const onRequestGet: PagesFunction<Env & { GCAL_ICS_URL?: string }> = asyn
   const max = new Date(Date.now() + 180 * 864e5).toISOString().slice(0, 10);
   const items = out.filter((e) => e.debut.slice(0, 10) >= min && e.debut.slice(0, 10) <= max).sort((a, b) => a.debut.localeCompare(b.debut));
   return json({ items, configure: true });
+};
+
+// Création d'un événement : { titre, date, debut?, fin?, journee, lieu?, description?, chaqueSemaineJusqua? }
+export type Corps = { titre?: string; date?: string; debut?: string; fin?: string; journee?: boolean; lieu?: string; description?: string; chaqueSemaineJusqua?: string };
+export function corpsGoogle(b: Corps) {
+  if (!b.titre?.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(b.date ?? "")) throw new Error("Titre et date requis.");
+  const tz = "America/Toronto";
+  const ev: Record<string, unknown> = { summary: b.titre.trim().slice(0, 200), location: b.lieu?.slice(0, 300) || undefined, description: b.description?.slice(0, 4000) || undefined };
+  if (b.journee || !b.debut) {
+    const fin = new Date(b.date + "T12:00:00Z"); fin.setUTCDate(fin.getUTCDate() + 1);
+    ev.start = { date: b.date }; ev.end = { date: fin.toISOString().slice(0, 10) };
+  } else {
+    const finH = b.fin && b.fin > b.debut ? b.fin : `${String(Math.min(23, Number(b.debut.slice(0, 2)) + 1)).padStart(2, "0")}${b.debut.slice(2)}`;
+    ev.start = { dateTime: `${b.date}T${b.debut}:00`, timeZone: tz }; ev.end = { dateTime: `${b.date}T${finH}:00`, timeZone: tz };
+  }
+  if (b.chaqueSemaineJusqua && /^\d{4}-\d{2}-\d{2}$/.test(b.chaqueSemaineJusqua)) ev.recurrence = [`RRULE:FREQ=WEEKLY;UNTIL=${b.chaqueSemaineJusqua.replace(/-/g, "")}T235959Z`];
+  return ev;
+}
+
+export const onRequestPost: PagesFunction<AEnv, string, { email: string }> = async (ctx) => {
+  if (!gcalActif(ctx.env)) return json({ error: "La création d’événements n’est pas encore configurée (secrets GCAL_SA_JSON et GCAL_ID)." }, 503);
+  try {
+    const b = (await ctx.request.json()) as Corps;
+    const ev = corpsGoogle(b) as Record<string, unknown>;
+    ev.description = [ev.description, `Ajouté depuis l’admin par ${ctx.data.email}`].filter(Boolean).join("\n\n");
+    const r = await gcal(ctx.env, "/events", { method: "POST", body: JSON.stringify(ev) }) as GEvent;
+    await journal(ctx.env, ctx.data.email, "création", "agenda");
+    return json({ item: r }, 201);
+  } catch (e) { return json({ error: (e as Error).message }, 400); }
 };
