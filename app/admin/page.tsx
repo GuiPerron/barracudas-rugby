@@ -429,9 +429,9 @@ type Item = { cle: string; jour: string; heure?: string; titre: string; type: "a
 const MOIS_FR = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
 
 function Calendrier({ taches, comm, aller }: { taches: Tache[]; comm: Commandite[]; aller: (o: Onglet) => void }) {
-  const [ag, setAg] = useState<{ items: AgendaEv[]; configure: boolean; ecriture?: boolean; erreurApi?: string } | null>(null);
+  const [ag, setAg] = useState<{ items: AgendaEv[]; configure: boolean; ecriture?: boolean } | null>(null);
   const [form, setForm] = useState<EvForm | null>(null);
-  const charger = useCallback(() => { api<{ items: AgendaEv[]; configure: boolean; ecriture?: boolean; erreurApi?: string }>("/api/admin/agenda").then(setAg).catch(() => setAg({ items: [], configure: true })); }, []);
+  const charger = useCallback(() => { api<{ items: AgendaEv[]; configure: boolean; ecriture?: boolean }>("/api/admin/agenda").then(setAg).catch(() => setAg({ items: [], configure: true })); }, []);
   const [mois, setMois] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
   const [choix, setChoix] = useState<Item | null>(null);
   useEffect(() => { charger(); }, [charger]);
@@ -463,7 +463,6 @@ function Calendrier({ taches, comm, aller }: { taches: Tache[]; comm: Commandite
             : <a className="adm-btn line" href="https://calendar.google.com/" target="_blank" rel="noopener">+ Événement (Google Agenda)</a>}
         </div>
       </div>
-      {ag?.erreurApi && <p className="adm-alert">Création d’événements indisponible : {ag.erreurApi}</p>}
       {ag && !ag.configure && <p className="adm-alert" style={{ background: "#FFF4DE", color: "#7A4B00" }}>L’agenda Google n’est pas encore branché : ajoute le secret <b>GCAL_ICS_URL</b> dans Cloudflare. Les tâches et relances s’affichent déjà.</p>}
       <div className="adm-cal-wrap">
         <section className="adm-card adm-cal">
@@ -537,6 +536,18 @@ function versForm(e: AgendaEv): EvForm {
   return { id: e.id, recurrent: e.recurrent, titre: e.titre, date: jour, debut: hm(e.debut), fin: hm(e.fin), journee: e.journee, lieu: e.lieu, description: e.description?.replace(/\n*Ajouté depuis l’admin par .*$/s, "") };
 }
 
+const enMin = (h: string) => { const [a, b] = h.split(":").map(Number); return a * 60 + (b || 0); };
+const deMin = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+const affH = (h: string) => { const [a, b] = h.split(":"); return `${Number(a)} h ${b}`; };
+const duree = (m: number) => (m < 60 ? `${m} min` : `${Math.floor(m / 60)} h${m % 60 ? ` ${String(m % 60).padStart(2, "0")}` : ""}`);
+/** Créneaux de 15 min de 6 h à 23 h 45 (+ la valeur actuelle si hors grille). */
+function heures(actuelle?: string) {
+  const l: string[] = [];
+  for (let m = 6 * 60; m <= 23 * 60 + 45; m += 15) l.push(deMin(m));
+  if (actuelle && !l.includes(actuelle)) { l.push(actuelle); l.sort(); }
+  return l;
+}
+
 function FormEvenement({ init, fermer, apres }: { init: EvForm; fermer: () => void; apres: () => void }) {
   const [f, setF] = useState<EvForm>(init);
   const [repete, setRepete] = useState(false);
@@ -570,8 +581,22 @@ function FormEvenement({ init, fermer, apres }: { init: EvForm; fermer: () => vo
       </div>
       {!f.journee && (
         <div className="adm-row">
-          <label>Début<input type="time" value={f.debut ?? ""} onChange={s("debut")} required /></label>
-          <label>Fin<input type="time" value={f.fin ?? ""} onChange={s("fin")} /></label>
+          <label>Début
+            <select value={f.debut ?? "19:00"} onChange={(e) => {
+              const d = e.target.value;
+              const ecart = f.debut && f.fin ? enMin(f.fin) - enMin(f.debut) : 90;
+              setF({ ...f, debut: d, fin: deMin(Math.min(enMin(d) + (ecart > 0 ? ecart : 90), 23 * 60 + 45)) });
+            }}>
+              {heures(f.debut).map((h) => <option key={h} value={h}>{affH(h)}</option>)}
+            </select>
+          </label>
+          <label>Fin
+            <select value={f.fin ?? ""} onChange={(e) => setF({ ...f, fin: e.target.value })}>
+              {heures(f.fin).filter((h) => enMin(h) > enMin(f.debut ?? "00:00")).map((h) => (
+                <option key={h} value={h}>{affH(h)} ({duree(enMin(h) - enMin(f.debut ?? "00:00"))})</option>
+              ))}
+            </select>
+          </label>
         </div>
       )}
       <label>Lieu<input value={f.lieu ?? ""} onChange={s("lieu")} placeholder="ex. Parc Côte à Gladu" /></label>
