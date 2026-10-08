@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Page from "@/components/Page";
 import { SectionTitle, Photo, Arrow } from "@/components/ui";
-import { CLUB } from "@/data/site";
+import { CLUB, CA } from "@/data/site";
 import { INTRO_CLUB } from "@/data/commandites";
 
 export const metadata: Metadata = { title: "Le club", description: "Le Club de rugby Les Barracudas de Saint-Jean-sur-Richelieu, depuis 1998." };
@@ -38,8 +38,14 @@ export default function LeClub() {
         <div className="w">
           <SectionTitle>Conseil d’administration</SectionTitle>
           <div className="grid3" style={{ marginTop: 26 }}>
-            <div className="card rv"><h3>Jean Forget</h3><p className="k" style={{ color: "var(--skyd)" }}>Président</p></div>
-            <div className="card rv"><h3>Clément Poncin</h3><p className="k" style={{ color: "var(--skyd)" }}>Vice-président · commandites</p></div>
+            {CA.map((m) => (
+              <div key={m.nom} className="card rv">
+                <p className="k" style={{ color: "var(--skyd)" }}>{m.poste}</p>
+                <h3 style={{ marginTop: 8 }}>{m.nom}</h3>
+                <p style={{ fontSize: 15, color: "var(--muted)", lineHeight: 1.5 }}>{m.role}</p>
+                <a href={`mailto:${m.courriel}`} style={{ display: "inline-block", marginTop: 10, color: "var(--skyd)", fontWeight: 600, fontSize: 14 }}>{m.courriel}</a>
+              </div>
+            ))}
           </div>
         </div>
       </section>

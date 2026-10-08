@@ -75,3 +75,12 @@ export const CLUB = {
     { img: "DB9", label: "Devenir bénévole", href: "/contact/?sujet=benevole" },
   ],
 };
+
+// Conseil d'administration 2026-2027 (fourni par Guillaume, 8 oct. 2026)
+export const CA = [
+  { poste: "Président", role: "Direction générale et communications", nom: "Jean Forget", courriel: "jean.forget@barracudasrugby.com" },
+  { poste: "Vice-président", role: "Responsable gouvernance et commanditaires", nom: "Clément Poncin", courriel: "info@barracudasrugby.com" },
+  { poste: "Administrateur", role: "Direction technique et gestion logistique", nom: "Christophe Morin", courriel: "info@barracudasrugby.com" },
+  { poste: "Administrateur", role: "Trésorier", nom: "Marc-André Lamoureux", courriel: "info@barracudasrugby.com" },
+  { poste: "Administrateur", role: "Secrétaire", nom: "Gabriel Bédard", courriel: "info@barracudasrugby.com" },
+];
