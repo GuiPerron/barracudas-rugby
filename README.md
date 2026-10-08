@@ -39,7 +39,6 @@ Les courriels du club restent sur Google Workspace ; ne pas toucher aux enregist
 
 ## Reste à obtenir du club
 
-- URL Facebook exacte et URL Instagram (`data/site.ts`, `LIENS`)
 - Articles et prix de la boutique
 - Logos des commanditaires
 - Accès DNS (Squarespace Domains), comptes GitHub et Cloudflare du club (transfert du dépôt)

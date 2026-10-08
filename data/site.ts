@@ -9,8 +9,8 @@ export const NAV = [
 ];
 
 export const LIENS = {
-  facebook: "https://www.facebook.com/", // TODO : URL exacte de la page Facebook du club
-  instagram: "", // TODO : URL Instagram à obtenir du club
+  facebook: "https://www.facebook.com/barracudasrugby/",
+  instagram: "https://www.instagram.com/barracudasrugbystjean/",
   espaceJoueurs: "https://www.playhq.com/", // TODO : phase 2 (portail joueurs) ; PlayHQ en attendant
   playhq: "https://www.playhq.com/",
 };
