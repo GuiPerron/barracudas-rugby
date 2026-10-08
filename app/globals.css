@@ -586,3 +586,122 @@ a, button, .story, .tile, .ncard, .feat, .brief, .tierc { cursor: pointer }
 .adm-check { display: flex !important; flex-direction: row; align-items: center; gap: 8px !important; font-weight: 600; align-self: end; padding-bottom: 10px }
 .adm-check input { width: 18px; height: 18px; padding: 0 }
 .adm-cal-day.ajout { cursor: copy } .adm-cal-day.ajout:hover { background: #F3F8FC }
+
+/* ================= Cahier de jeu ================= */
+.adm-btn.cor { background: var(--cor) }
+.adm-btn.line.on { background: var(--navy); color: #fff }
+.adm-alert.info { background: #E6F6FD; color: var(--navy) }
+.jeu-entete { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px }
+.jeu-sousnav { display: flex; gap: 4px; background: #E8EDF2; padding: 4px; border-radius: 10px }
+.jeu-sousnav button { border: 0; background: none; padding: 8px 14px; border-radius: 7px; font: 700 13px var(--fb); color: var(--muted); cursor: pointer }
+.jeu-sousnav button.on { background: #fff; color: var(--navy); box-shadow: 0 1px 3px rgba(19,38,68,.12) }
+.jeu-toast { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); background: var(--navy); color: #fff; padding: 12px 20px; border-radius: 10px; font: 600 14px var(--fb); z-index: 60; box-shadow: 0 8px 24px rgba(19,38,68,.3) }
+.jeu-guide { position: relative; background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px var(--line); padding: 18px 52px 18px 18px; margin-bottom: 18px; border-left: 4px solid var(--sky) }
+.jeu-guide ol { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin: 0; padding: 0 }
+.jeu-guide li { display: flex; gap: 10px; align-items: flex-start }
+.jeu-guide li b { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--navy); color: #fff; display: grid; place-items: center; font: 800 14px var(--fb) }
+.jeu-guide strong { display: block; color: var(--navy); font-size: 14px; margin-bottom: 2px }
+.jeu-guide span { font-size: 13px; color: var(--muted); line-height: 1.45 }
+.jeu-guide .adm-x { position: absolute; top: 10px; right: 10px }
+.jeu-lien { border: 0; background: none; color: var(--skyd); font: 700 13px var(--fb); cursor: pointer; padding: 0 }
+.jeu-guide-lien { margin-bottom: 14px; display: inline-block }
+.jeu-filtres { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px }
+.jeu-filtres button { border: 0; background: #fff; box-shadow: inset 0 0 0 1.5px var(--line); padding: 8px 14px; border-radius: 999px; font: 600 13px var(--fb); color: var(--navy); cursor: pointer }
+.jeu-filtres button.on { background: var(--navy); color: #fff; box-shadow: none }
+.jeu-cartes { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px }
+.jeu-carte { all: unset; cursor: pointer; background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px var(--line); overflow: hidden; transition: transform .2s, box-shadow .2s }
+.jeu-carte:hover, .jeu-carte:focus-visible { transform: translateY(-2px); box-shadow: 0 0 0 2px var(--sky), 0 8px 20px rgba(19,38,68,.1) }
+.jeu-mini { position: relative; background: #132644 }
+.jeu-mini span { position: absolute; top: 8px; left: 8px; background: rgba(255,255,255,.92); color: var(--navy); font: 700 11px var(--fb); padding: 3px 8px; border-radius: 999px }
+.jeu-carte-info { padding: 12px 14px 14px }
+.jeu-carte-info h3 { font: italic 800 19px/1.1 var(--ft); text-transform: uppercase; color: var(--navy); margin-bottom: 4px }
+.jeu-carte-info p { font-size: 12px; color: var(--muted); margin-bottom: 10px }
+.jeu-carte-info div { display: flex; justify-content: space-between; align-items: center }
+.jeu-statut { display: inline-block; font: 700 11px var(--fb); padding: 3px 9px; border-radius: 999px; background: #E8EDF2; color: var(--navy) }
+.jeu-statut.published { background: #DDF5E6; color: #146B3A }
+.jeu-statut.exemple { background: #FFF1D6; color: #8A5A00 }
+.jeu-terrain { display: block; width: 100%; height: auto; border-radius: 10px; touch-action: none; user-select: none }
+.jeu-terrain.compact { border-radius: 0; pointer-events: none }
+.jeu-terrain .draggable { cursor: grab } .jeu-terrain .draggable:active { cursor: grabbing }
+.jeu-joueur:focus { outline: none } .jeu-joueur:focus-visible circle:last-of-type { stroke: #fff; stroke-width: 3 }
+.jeu-retour { border: 0; background: none; color: var(--skyd); font: 700 14px var(--fb); cursor: pointer; padding: 4px 0; margin-bottom: 8px }
+.jeu-titre { display: flex; justify-content: space-between; align-items: flex-end; gap: 14px; flex-wrap: wrap; margin-bottom: 16px }
+.jeu-titre h2 { font: italic 800 32px/1 var(--ft); text-transform: uppercase; color: var(--navy); margin-top: 6px }
+.jeu-actions, .jeu-ligne { display: flex; gap: 8px; flex-wrap: wrap; align-items: center }
+.jeu-grille { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start }
+.jeu-tableau, .jeu-panneau { background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px var(--line); padding: 16px; min-width: 0 }
+.jeu-barre { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px }
+.jeu-tag { font: 700 11px var(--fb); letter-spacing: .1em; text-transform: uppercase; color: var(--skyd) }
+.jeu-etat { font-size: 12px; font-weight: 600; color: var(--muted) }
+.jeu-outils { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 12px }
+.jeu-seg { display: flex; gap: 2px; background: #E8EDF2; padding: 3px; border-radius: 9px; flex-wrap: wrap }
+.jeu-seg button { border: 0; background: none; padding: 8px 12px; border-radius: 7px; font: 700 13px var(--fb); color: var(--navy); cursor: pointer }
+.jeu-seg button.on { background: var(--navy); color: #fff }
+.jeu-seg button:disabled { opacity: .4; cursor: default }
+.jeu-cadre { background: #132644; border-radius: 10px }
+.jeu-legende { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); margin: 10px 0 }
+.jeu-legende span { display: inline-flex; align-items: center; gap: 6px }
+.jeu-legende i { display: inline-block; width: 12px; height: 12px; border-radius: 50% }
+.jeu-legende .nous { background: #68CEF6 } .jeu-legende .eux { background: rgba(255,90,60,.4); box-shadow: inset 0 0 0 1.5px #FF5A3C }
+.jeu-legende .l-course, .jeu-legende .l-passe, .jeu-legende .l-pied { width: 18px; height: 0; border-radius: 0; border-top: 3px solid #1F6F94 }
+.jeu-legende .l-passe { border-top-style: dashed; border-color: var(--navy) } .jeu-legende .l-pied { border-top-style: dotted; border-color: var(--cor) }
+.jeu-legende .sens { margin-left: auto; font-weight: 700; color: var(--navy) }
+.jeu-lecture { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; font-size: 13px; font-weight: 600; color: var(--navy) }
+.jeu-phases { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px }
+.jeu-phases button { flex: none; border: 0; background: var(--light); border-radius: 9px; padding: 9px 12px; text-align: left; cursor: pointer; display: grid; gap: 2px; min-width: 120px; font-family: var(--fb) }
+.jeu-phases button span { font: 700 10px var(--fb); color: var(--muted) }
+.jeu-phases button strong { font-size: 13px; color: var(--navy) }
+.jeu-phases button.on { background: var(--navy) } .jeu-phases button.on span { color: var(--sky) } .jeu-phases button.on strong { color: #fff }
+.jeu-phases .ajout { background: #fff; box-shadow: inset 0 0 0 1.5px var(--line); border: 1.5px dashed var(--line); font: 700 13px var(--fb); color: var(--skyd); display: flex; align-items: center }
+.jeu-aide { margin-top: 10px }
+.jeu-onglets { display: grid; grid-template-columns: repeat(4, auto); gap: 2px; background: #E8EDF2; padding: 3px; border-radius: 9px; margin-bottom: 16px }
+.jeu-onglets button { border: 0; background: none; padding: 8px 6px; border-radius: 7px; font: 700 12px var(--fb); color: var(--muted); cursor: pointer; white-space: nowrap }
+.jeu-onglets button.on { background: #fff; color: var(--navy); box-shadow: 0 1px 3px rgba(19,38,68,.12) }
+.jeu-contenu { display: grid; gap: 12px }
+.jeu-contenu label { display: grid; gap: 6px; font: 600 13px var(--fb); color: var(--navy) }
+.jeu-contenu h3 { font: italic 800 20px var(--ft); text-transform: uppercase; color: var(--navy) }
+.jeu-contenu .adm-fil { margin-top: 0; padding-top: 0; border: 0 }
+.jeu-poste { display: flex; gap: 12px; align-items: center }
+.jeu-poste > span { width: 46px; height: 46px; border-radius: 50%; background: #68CEF6; color: #0E1D35; display: grid; place-items: center; font: 800 20px var(--fb) }
+.jeu-poste small { font: 700 10px var(--fb); letter-spacing: .14em; color: var(--muted) }
+.jeu-sur { font: 700 11px var(--fb); letter-spacing: .1em; text-transform: uppercase; color: var(--skyd) }
+.jeu-texte { font-size: 14px; line-height: 1.55; white-space: pre-wrap; color: var(--ink) }
+.jeu-sauver { position: sticky; bottom: 14px; margin-top: 16px; display: flex; justify-content: space-between; align-items: center; gap: 12px; background: var(--navy); color: #fff; padding: 12px 14px 12px 18px; border-radius: 12px; font: 600 14px var(--fb); box-shadow: 0 10px 28px rgba(19,38,68,.3); z-index: 20 }
+.jeu-sauver .adm-btn { background: var(--cor) }
+.jeu-formations { display: grid; gap: 12px }
+.jeu-form-liste { display: grid; grid-template-columns: 1fr 1fr; gap: 6px }
+.jeu-form-liste button { border: 0; background: var(--light); border-radius: 9px; padding: 9px 11px; text-align: left; cursor: pointer; display: grid; gap: 1px; font-family: var(--fb) }
+.jeu-form-liste small { font: 700 9px var(--fb); letter-spacing: .12em; color: var(--muted) }
+.jeu-form-liste strong { font-size: 14px; color: var(--navy) }
+.jeu-form-liste span { font-size: 12px; color: var(--muted); line-height: 1.35 }
+.jeu-form-liste button.on { background: #E6F6FD; box-shadow: inset 0 0 0 2px var(--skyd) }
+.jeu-form-apercu { background: var(--light); border-radius: 10px; overflow: hidden }
+.jeu-form-apercu p { font-size: 12px; color: var(--muted); padding: 10px 12px 4px; line-height: 1.45 }
+.jeu-form-apercu a { display: inline-block; font-size: 12px; font-weight: 700; color: var(--skyd); padding: 0 12px 10px }
+.jeu-principes { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px }
+.jeu-principe { display: grid; gap: 8px; align-content: start }
+.jeu-principe h3 { font: italic 800 20px var(--ft); text-transform: uppercase; color: var(--navy) }
+.jeu-principe p { font-size: 14px; line-height: 1.55; white-space: pre-wrap }
+.jeu-principe input { font-weight: 700 !important }
+.jeu-principe .jeu-lien { justify-self: start; color: #B42318 }
+.jeu-num { font: 800 12px var(--fb); color: var(--skyd); letter-spacing: .1em }
+.jeu-membres { padding: 6px 20px }
+.jeu-membre { display: grid; grid-template-columns: 32px minmax(0,1.4fr) 1fr auto auto; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line) }
+.jeu-membre:first-child { border-top: 0 }
+.jeu-membre strong { display: block; color: var(--navy); font-size: 14px }
+.jeu-membre small { color: var(--muted); font-size: 12px; overflow-wrap: anywhere }
+.jeu-role { font: 700 11px var(--fb); padding: 3px 9px; border-radius: 999px; background: #E8EDF2; color: var(--navy) }
+.jeu-role.editeur { background: #E6F6FD; color: var(--skyd) }
+.jeu-note { margin-top: 12px; max-width: 760px }
+@media (max-width: 1000px) {
+  .jeu-grille { grid-template-columns: minmax(0, 1fr) }
+  .jeu-guide ol { grid-template-columns: 1fr 1fr }
+}
+@media (max-width: 640px) {
+  .jeu-guide ol, .jeu-form-liste { grid-template-columns: 1fr }
+  .jeu-tableau, .jeu-panneau { padding: 10px }
+  .jeu-titre h2 { font-size: 26px }
+  .jeu-membre { grid-template-columns: 32px minmax(0,1fr) auto; }
+  .jeu-membre > .adm-muted, .jeu-membre > .jeu-role { display: none }
+  .jeu-legende .sens { margin-left: 0 }
+}

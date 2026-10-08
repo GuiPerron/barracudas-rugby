@@ -15,8 +15,9 @@ async function cles(team: string): Promise<Jwk[]> {
   return j.keys;
 }
 
-/** Retourne le courriel de l'utilisateur autorisé, ou null. Échoue fermé. */
-export async function utilisateur(request: Request, env: Env): Promise<string | null> {
+/** Retourne le courriel de l'utilisateur autorisé, ou null. Échoue fermé.
+ *  horsListe = true : accepte un jeton Access valide même hors ADMIN_EMAILS (l'appelant restreint ensuite). */
+export async function utilisateur(request: Request, env: Env, horsListe = false): Promise<string | null> {
   const autorises = (env.ADMIN_EMAILS ?? "").split(",").map((x) => x.trim().toLowerCase()).filter(Boolean);
   if (env.DEV_EMAIL && new URL(request.url).hostname === "localhost") return env.DEV_EMAIL.toLowerCase();
   const jwt = request.headers.get("cf-access-jwt-assertion");
@@ -36,7 +37,7 @@ export async function utilisateur(request: Request, env: Env): Promise<string | 
     if (payload.iss !== env.ACCESS_TEAM_DOMAIN) return null;
     if (env.ACCESS_AUD && !(Array.isArray(payload.aud) ? payload.aud : [payload.aud]).includes(env.ACCESS_AUD)) return null;
     const email = String(payload.email ?? "").toLowerCase();
-    if (!email || (autorises.length && !autorises.includes(email))) return null;
+    if (!email || (!horsListe && autorises.length && !autorises.includes(email))) return null;
     return email;
   } catch { return null; }
 }

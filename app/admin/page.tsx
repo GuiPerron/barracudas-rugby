@@ -3,16 +3,14 @@
 // Protégé par Cloudflare Access (/admin et /api/admin). Données : Cloudflare D1 via /api/admin/*.
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Logo } from "@/components/ui";
+import { api, nom, Bulle, Fil, Tiroir, type Commentaire, type Comptes } from "@/components/admin/commun";
+import CahierJeu from "@/components/jeu/CahierJeu";
 
 type Tache = { id: number; titre: string; details?: string; responsable?: string; echeance?: string; statut: string; ordre: number; cree_par?: string; maj_le: string };
 type Commandite = { id: number; entreprise: string; contact?: string; courriel?: string; telephone?: string; site?: string; forfait?: string; entente?: string; montant?: number; statut: string; responsable?: string; prochaine_action?: string; prochaine_date?: string; notes?: string; maj_le: string };
 type Soumission = { id: number; type: string; donnees: string; statut: string; note?: string; recu_le: string };
 
-const NOMS: Record<string, string> = { "guillaume.perron": "Guillaume", info: "Jean", commandites: "Clément", technique: "Christophe", tresorier: "Marc-André", secretaire: "Gabriel" };
-const nom = (email: string) => NOMS[email.split("@")[0]] ?? email.split("@")[0];
-type Commentaire = { id: number; objet: string; objet_id: number; auteur: string; texte: string; cree_le: string };
-type Comptes = Record<string, number>;
-type Onglet = "accueil" | "calendrier" | "taches" | "commandites" | "boutique" | "formulaires";
+type Onglet = "accueil" | "calendrier" | "taches" | "commandites" | "jeu" | "boutique" | "formulaires";
 const STOCK_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyW52TNHkjxOzpxP601Wvtnqk9EPXt85Hg5f09Hpu_r-lR_2OkVcM0Qek5FfSE_rBpoLLx9Ofg6mk1/pub?gid=0&single=true&output=csv";
 const STOCK_SHEET = "https://docs.google.com/spreadsheets/d/1U47fd-tFfBcbK6MYYQfqbUMstz_kgPBsVIhjy-DfA2o/edit";
 const PRIX_TSHIRT = 25;
@@ -42,12 +40,6 @@ const FORFAITS = ["Or · 1 000 $", "Argent · 750 $", "Bronze · 500 $", "Biens 
 const TYPES: Record<string, string> = { contact: "Contact", commandite: "Commandite", precommande: "Réservation boutique" };
 const LIB: Record<string, string> = { sujet: "Sujet", nom: "Nom", courriel: "Courriel", telephone: "Téléphone", message: "Message", entreprise: "Entreprise", forfait: "Forfait", entente: "Durée", article: "Article", taille: "Taille", quantite: "Quantité", total: "Total" };
 
-async function api<T>(url: string, init?: RequestInit): Promise<T> {
-  const r = await fetch(url, { ...init, headers: { "content-type": "application/json", ...(init?.headers ?? {}) } });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error((j as { error?: string }).error || `Erreur ${r.status}`);
-  return j as T;
-}
 const today = () => new Date().toISOString().slice(0, 10);
 const dateFr = (iso?: string) => {
   if (!iso) return "";
@@ -65,17 +57,25 @@ export default function Admin() {
   const [soum, setSoum] = useState<Soumission[]>([]);
   const [charge, setCharge] = useState(false);
   const [comptes, setComptes] = useState<Comptes>({});
+  const [ca, setCa] = useState(true);
 
   const recharger = useCallback(async () => {
     try {
-      const [m, t, c, s, k] = await Promise.all([
-        api<{ email: string }>("/api/admin/moi"),
+      const m = await api<{ email: string; ca: boolean }>("/api/admin/moi");
+      setEmail(m.email); setCa(m.ca);
+      if (!m.ca) {
+        // Membre du cahier de jeu hors CA : seulement le cahier.
+        const k = await api<{ comptes: { objet: string; objet_id: number; n: number }[] }>("/api/admin/commentaires");
+        setComptes(Object.fromEntries(k.comptes.map((x) => [`${x.objet}:${x.objet_id}`, x.n])));
+        setOnglet("jeu"); setErreur(""); setCharge(true); return;
+      }
+      const [t, c, s, k] = await Promise.all([
         api<{ items: Tache[] }>("/api/admin/taches"),
         api<{ items: Commandite[] }>("/api/admin/commandites"),
         api<{ items: Soumission[] }>("/api/admin/soumissions"),
         api<{ comptes: { objet: string; objet_id: number; n: number }[] }>("/api/admin/commentaires"),
       ]);
-      setEmail(m.email); setTaches(t.items); setComm(c.items); setSoum(s.items); setErreur("");
+      setTaches(t.items); setComm(c.items); setSoum(s.items); setErreur("");
       setComptes(Object.fromEntries(k.comptes.map((x) => [`${x.objet}:${x.objet_id}`, x.n])));
     } catch (e) { setErreur((e as Error).message); }
     setCharge(true);
@@ -90,7 +90,7 @@ export default function Admin() {
   return (
     <div className="adm">
       <header className="adm-top">
-        <a href="/" className="adm-brand" title="Voir le site"><Logo /><span>Admin <b>CA Barracudas</b></span></a>
+        <a href="/" className="adm-brand" title="Voir le site"><Logo /><span>Admin <b>{ca ? "CA Barracudas" : "Cahier de jeu"}</b></span></a>
         <div className="adm-user">
           {email && <span className="adm-email">{email}</span>}
           <a className="adm-btn line sm" href="/cdn-cgi/access/logout">Déconnexion</a>
@@ -102,9 +102,10 @@ export default function Admin() {
           ["calendrier", "Calendrier", 0],
           ["taches", "Tâches", ouvertes],
           ["commandites", "Commanditaires", 0],
+          ["jeu", "Cahier de jeu", 0],
           ["boutique", "Boutique", soum.filter((x) => x.type === "precommande" && x.statut === "nouveau").length],
           ["formulaires", "Formulaires reçus", nouveaux],
-        ] as const).map(([k, l, n]) => (
+        ] as const).filter(([k]) => ca || k === "jeu").map(([k, l, n]) => (
           <button key={k} className={onglet === k ? "on" : ""} onClick={() => aller(k)}>{l}{n ? <i>{n}</i> : null}</button>
         ))}
       </nav>
@@ -112,7 +113,8 @@ export default function Admin() {
         {erreur && <p className="adm-alert">{erreur === "Accès refusé." ? "Accès refusé : ton adresse n'est pas dans la liste des membres du CA." : erreur}</p>}
         {!charge ? <p className="adm-muted">Chargement…</p> : (
           <>
-            {onglet === "accueil" && <Accueil taches={taches} comm={comm} soum={soum} aller={aller} email={email} />}
+            {onglet === "jeu" && <CahierJeu comptes={comptes} setComptes={setComptes} />}
+            {ca && onglet === "accueil" && <Accueil taches={taches} comm={comm} soum={soum} aller={aller} email={email} />}
             {onglet === "boutique" && <Boutique items={soum} setItems={setSoum} />}
             {onglet === "calendrier" && <Calendrier taches={taches} comm={comm} aller={aller} />}
             {onglet === "taches" && <Taches items={taches} setItems={setTaches} email={email} comptes={comptes} setComptes={setComptes} />}
@@ -756,87 +758,3 @@ function Formulaires({ items, setItems, creerCommandite }: { items: Soumission[]
 }
 
 /* ---------------- Commentaires ---------------- */
-function Bulle({ n }: { n?: number }) {
-  if (!n) return null;
-  return (
-    <span className="adm-bulle" title={`${n} commentaire${n > 1 ? "s" : ""}`}>
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" /></svg>{n}
-    </span>
-  );
-}
-
-function Fil({ objet, id, email, setComptes }: { objet: "taches" | "commandites"; id: number; email: string; setComptes: React.Dispatch<React.SetStateAction<Comptes>> }) {
-  const [items, setItems] = useState<Commentaire[] | null>(null);
-  const [texte, setTexte] = useState("");
-  const [envoi, setEnvoi] = useState(false);
-  useEffect(() => {
-    api<{ items: Commentaire[] }>(`/api/admin/commentaires?objet=${objet}&id=${id}`).then((r) => setItems(r.items)).catch(() => setItems([]));
-  }, [objet, id]);
-  const cle = `${objet}:${id}`;
-  async function envoyer(e: React.FormEvent) {
-    e.preventDefault();
-    if (!texte.trim()) return;
-    setEnvoi(true);
-    try {
-      const r = await api<{ item: Commentaire }>("/api/admin/commentaires", { method: "POST", body: JSON.stringify({ objet, objet_id: id, texte }) });
-      setItems((x) => [...(x ?? []), r.item]); setTexte("");
-      setComptes((c) => ({ ...c, [cle]: (c[cle] ?? 0) + 1 }));
-    } catch (er) { alert((er as Error).message); }
-    setEnvoi(false);
-  }
-  async function supprimer(c: Commentaire) {
-    if (!confirm("Supprimer ce commentaire ?")) return;
-    await api(`/api/admin/commentaires/${c.id}`, { method: "DELETE" });
-    setItems((x) => (x ?? []).filter((y) => y.id !== c.id));
-    setComptes((k) => ({ ...k, [cle]: Math.max(0, (k[cle] ?? 1) - 1) }));
-  }
-  return (
-    <section className="adm-fil">
-      <h3>Commentaires {items && items.length > 0 && <span>{items.length}</span>}</h3>
-      {items === null ? <p className="adm-muted">Chargement…</p> : items.length === 0 ? <p className="adm-muted">Aucun commentaire pour l’instant.</p> : (
-        <ol>
-          {items.map((c) => (
-            <li key={c.id} className={c.auteur === email ? "moi" : ""}>
-              <div className="adm-avatar" aria-hidden="true">{nom(c.auteur).slice(0, 1)}</div>
-              <div>
-                <p className="adm-meta"><b>{nom(c.auteur)}</b> · {quand(c.cree_le)}
-                  {c.auteur === email && <button onClick={() => supprimer(c)} aria-label="Supprimer">Supprimer</button>}</p>
-                <p className="adm-txt">{c.texte}</p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      )}
-      <form onSubmit={envoyer} className="adm-fil-form">
-        <textarea value={texte} onChange={(e) => setTexte(e.target.value)} rows={2} placeholder="Écrire un commentaire…"
-          onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) envoyer(e); }} />
-        <button className="adm-btn sm" disabled={envoi || !texte.trim()}>{envoi ? "…" : "Envoyer"}</button>
-      </form>
-    </section>
-  );
-}
-
-function quand(iso: string) {
-  const d = new Date(iso.replace(" ", "T") + "Z");
-  const min = Math.round((Date.now() - d.getTime()) / 60000);
-  if (min < 1) return "à l’instant";
-  if (min < 60) return `il y a ${min} min`;
-  if (min < 60 * 24) return `il y a ${Math.round(min / 60)} h`;
-  return d.toLocaleDateString("fr-CA", { day: "numeric", month: "short" }) + " " + d.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
-}
-
-/* ---------------- Tiroir (panneau latéral) ---------------- */
-function Tiroir({ titre, fermer, children }: { titre: string; fermer: () => void; children: React.ReactNode }) {
-  useEffect(() => {
-    const k = (e: KeyboardEvent) => e.key === "Escape" && fermer();
-    addEventListener("keydown", k); return () => removeEventListener("keydown", k);
-  }, [fermer]);
-  return (
-    <div className="adm-drawer-bg" onClick={fermer}>
-      <aside className="adm-drawer" onClick={(e) => e.stopPropagation()} role="dialog" aria-label={titre}>
-        <header><h2>{titre}</h2><button className="adm-x" onClick={fermer} aria-label="Fermer">×</button></header>
-        {children}
-      </aside>
-    </div>
-  );
-}
