@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { ouvrirCourriel } from "@/lib/mailto";
 
 export type Champ =
   | { type: "text" | "email" | "tel"; name: string; label: string; required?: boolean; autoComplete?: string; half?: boolean }
@@ -10,6 +11,7 @@ export type Champ =
 export default function Form({ kind, fields, submit, extra }: { kind: "contact" | "commandite" | "precommande"; fields: Champ[]; submit: string; extra?: Record<string, string> }) {
   const [state, setState] = useState<"idle" | "sending" | "ok" | "err">("idle");
   const [err, setErr] = useState("");
+  const [viaCourriel, setViaCourriel] = useState(false);
   const [initial, setInitial] = useState<Record<string, string>>({});
 
   // Présélection via ?sujet=… (ex. /contact/?sujet=rejoindre)
@@ -29,20 +31,23 @@ export default function Form({ kind, fields, submit, extra }: { kind: "contact" 
     e.preventDefault();
     setState("sending"); setErr("");
     const data = Object.fromEntries(new FormData(e.currentTarget).entries());
+    const payload = { kind, ...extra, ...data };
+    const form = e.currentTarget;
     try {
-      const r = await fetch("/api/formulaire", {
-        method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ kind, ...extra, ...data }),
-      });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j.error || "Envoi impossible pour le moment.");
-      setState("ok"); (e.target as HTMLFormElement).reset();
-    } catch (x) {
-      setState("err"); setErr((x as Error).message);
+      const r = await fetch("/api/formulaire", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+      if (!r.ok) throw new Error("api");
+      setState("ok"); form.reset();
+    } catch {
+      // Envoi en ligne pas encore configuré : courriel prérempli vers le club
+      const titres = { contact: "Message du site", commandite: "Demande de commandite", precommande: "Réservation boutique" };
+      ouvrirCourriel(`${titres[kind]}${data.sujet ? " · " + data.sujet : ""}${data.entreprise ? " · " + data.entreprise : ""}`, payload);
+      setViaCourriel(true); setState("ok");
     }
   }
 
-  if (state === "ok") return <p className="msg ok" role="status">Merci ! Votre message a bien été envoyé. Nous vous répondrons rapidement.</p>;
+  if (state === "ok") return viaCourriel
+    ? <p className="msg ok" role="status"><b>Dernière étape :</b> votre logiciel de courriel s’est ouvert avec votre message déjà rédigé pour info@barracudasrugby.com. Cliquez sur Envoyer.</p>
+    : <p className="msg ok" role="status">Merci ! Votre message a bien été envoyé. Nous vous répondrons rapidement.</p>;
 
   const rows: React.ReactNode[] = [];
   for (let k = 0; k < fields.length; k++) {

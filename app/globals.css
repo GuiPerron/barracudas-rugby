@@ -371,6 +371,7 @@ a, button, .story, .tile, .ncard, .feat, .brief, .tierc { cursor: pointer }
 .prod-info .k { color: var(--skyd) }
 .prod-info h2 { font-size: 52px; line-height: .98; color: var(--navy); margin-top: 10px; letter-spacing: .02em }
 .prod-sub { font-size: 16px; color: var(--muted); margin-top: 8px }
+.prod-edition { display: inline-block; margin-top: 12px; background: var(--sky); color: var(--navy); font: 700 12px var(--fb); letter-spacing: .14em; text-transform: uppercase; padding: 6px 12px; border-radius: 4px }
 .prod-accroche { font-size: 16px; line-height: 1.55; color: #2b3644; margin-top: 14px; max-width: 480px }
 .prod-seg { display: inline-flex !important; gap: 0 !important; background: var(--light); border-radius: 999px; padding: 4px }
 .prod-seg button { height: 40px !important; border: 0 !important; border-radius: 999px !important; background: transparent !important; color: var(--navy) !important; padding: 0 20px !important }

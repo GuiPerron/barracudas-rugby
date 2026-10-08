@@ -159,13 +159,13 @@ export function Shop() {
       <div className="w shop">
         <div className="rv">
           <SectionTitle light>La boutique</SectionTitle>
-          <p className="lead">Le t-shirt supporteur officiel, avec nos partenaires au dos. Réservez-le en ligne, payez à la cueillette.</p>
+          <p className="lead">Le t-shirt supporteur officiel, édition 2026, avec nos partenaires au dos. Réservez-le en ligne, payez à la cueillette.</p>
           <p className="t" style={{ fontSize: 44, color: "var(--sky)", marginBottom: 22 }}>25 $</p>
           <a className="pill p-sky arr" href="/boutique/">Réserver mon t-shirt <Arrow /></a>
         </div>
         <a className="shop-prod rv" href="/boutique/" aria-label="T-shirt supporteur officiel">
           <img src="/img/tshirt-devant-1200.webp" srcSet="/img/tshirt-devant-600.webp 600w, /img/tshirt-devant-1200.webp 1200w" sizes="(max-width:760px) 90vw, 40vw" alt="T-shirt supporteur officiel des Barracudas" loading="lazy" />
-          <span className="prod-badge">T-shirt supporteur</span>
+          <span className="prod-badge">Édition 2026</span>
         </a>
       </div>
     </section>

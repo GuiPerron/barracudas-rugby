@@ -2,6 +2,7 @@
 import { useState } from "react";
 import type { Article } from "@/data/boutique";
 import { RESERVATION } from "@/data/boutique";
+import { ouvrirCourriel } from "@/lib/mailto";
 
 /** Fiche produit : galerie devant/dos + réservation (taille, quantité, coordonnées). Envoi vers /api/formulaire. */
 export default function Produit({ a }: { a: Article }) {
@@ -14,6 +15,7 @@ export default function Produit({ a }: { a: Article }) {
   const [qte, setQte] = useState(1);
   const [state, setState] = useState<"idle" | "sending" | "ok" | "err">("idle");
   const [err, setErr] = useState("");
+  const [viaCourriel, setViaCourriel] = useState(false);
   const total = a.prix * qte;
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -21,15 +23,16 @@ export default function Produit({ a }: { a: Article }) {
     if (!taille) { setErr("Choisissez une taille."); setState("err"); return; }
     setState("sending"); setErr("");
     const data = Object.fromEntries(new FormData(e.currentTarget).entries());
+    const payload = { kind: "precommande", article: `${a.nom}${a.edition ? " · " + a.edition : ""} · ${a.prix} $`, taille: `${c.nom} ${taille}`, quantite: String(qte), total: `${total} $`, ...data };
     try {
-      const r = await fetch("/api/formulaire", {
-        method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ kind: "precommande", article: `${a.nom} · ${a.prix} $`, taille: `${c.nom} ${taille}`, quantite: String(qte), ...data }),
-      });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(j.error || "Envoi impossible pour le moment.");
+      const r = await fetch("/api/formulaire", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(payload) });
+      if (!r.ok) throw new Error("api");
       setState("ok");
-    } catch (x) { setState("err"); setErr((x as Error).message); }
+    } catch {
+      // Envoi en ligne pas encore configuré : courriel prérempli vers le club
+      ouvrirCourriel(`Réservation t-shirt ${a.edition ?? ""} · ${c.nom} ${taille} × ${qte}`, payload);
+      setViaCourriel(true); setState("ok");
+    }
   }
 
   return (
@@ -54,6 +57,7 @@ export default function Produit({ a }: { a: Article }) {
       <div className="prod-info rv">
         <p className="k">{a.campagne ?? "Boutique du club"} · Réservation</p>
         <h2 className="t">{a.nom}</h2>
+        {a.edition && <span className="prod-edition">{a.edition}</span>}
         <p className="prod-sub">{a.sousTitre}</p>
         {a.accroche && <p className="prod-accroche">{a.accroche} Chaque t-shirt vendu finance la saison du club.</p>}
         <p className="t prod-prix">{a.prix} $</p>
@@ -61,7 +65,8 @@ export default function Produit({ a }: { a: Article }) {
 
         {state === "ok" ? (
           <div className="msg ok" role="status">
-            <b>Réservation envoyée !</b><br />{qte} × {a.nom}, {c.nom.toLowerCase()} {taille}, total {total} $.<br />{RESERVATION.confirmation} {RESERVATION.cueillette}
+            <b>{viaCourriel ? "Dernière étape : envoyez le courriel" : "Réservation envoyée !"}</b><br />
+            {viaCourriel && <>Votre logiciel de courriel s’est ouvert avec la réservation déjà rédigée pour info@barracudasrugby.com. Cliquez sur Envoyer.<br /></>}{qte} × {a.nom}, {c.nom.toLowerCase()} {taille}, total {total} $.<br />{RESERVATION.confirmation} {RESERVATION.cueillette}
           </div>
         ) : (
           <form className="form prod-form" onSubmit={onSubmit}>

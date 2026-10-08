@@ -4,6 +4,7 @@
 export type Article = {
   id: string;
   nom: string;
+  edition?: string; // nouveau t-shirt chaque année
   sousTitre: string;
   campagne?: string;
   accroche?: string;
@@ -19,6 +20,7 @@ export const ARTICLES: Article[] = [
   {
     id: "tshirt-supporteur",
     nom: "T-shirt supporteur officiel",
+    edition: "Édition 2026",
     sousTitre: "Barracudas Rugby ’98",
     campagne: "Campagne de financement 2026",
     accroche: "Portez fièrement les couleurs de votre équipe de rugby !",
