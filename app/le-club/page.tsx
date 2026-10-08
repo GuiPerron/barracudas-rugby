@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Page from "@/components/Page";
+import Entrainements from "@/components/Entrainements";
+import { LIENS } from "@/data/site";
 import { SectionTitle, Photo, Arrow } from "@/components/ui";
 import { CLUB, CA } from "@/data/site";
 import { INTRO_CLUB } from "@/data/commandites";
@@ -22,12 +24,13 @@ export default function LeClub() {
           </div>
         </div>
       </section>
+      <Entrainements />
       <section className="sec stand" id="equipe">
         <div className="w" style={{ alignItems: "center" }}>
           <div className="rv">
             <SectionTitle>L’équipe 2026</SectionTitle>
             <p className="prose" style={{ marginTop: 20 }}>35 joueurs inscrits en 2026. Demi-finalistes de la poule P3 A de Rugby Québec.</p>
-            <a className="pill p-navy arr" style={{ marginTop: 22 }} href="/contact/?sujet=rejoindre">Rejoindre l’équipe <Arrow /></a>
+            <a className="pill p-navy arr" style={{ marginTop: 22 }} href={LIENS.inscription}>Rejoindre l’équipe <Arrow /></a>
           </div>
           <div className="rv" style={{ position: "relative", height: 380, borderRadius: 14, overflow: "hidden" }}>
             <Photo name="SH53" className="zoom" sizes="(max-width:760px) 100vw, 50vw" alt="L’équipe des Barracudas" />

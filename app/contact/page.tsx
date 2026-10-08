@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Page from "@/components/Page";
 import Form from "@/components/Form";
+import Entrainements from "@/components/Entrainements";
 import { COURRIEL, LIENS } from "@/data/site";
 
 export const metadata: Metadata = { title: "Contact", description: "Joindre le Club de rugby Les Barracudas de Saint-Jean-sur-Richelieu." };
@@ -26,11 +27,7 @@ export default function Contact() {
               <h3>Courriel</h3>
               <p><a href={`mailto:${COURRIEL}`} style={{ color: "var(--skyd)", fontWeight: 600 }}>{COURRIEL}</a></p>
             </div>
-            <div className="card" style={{ marginTop: 18 }}>
-              <h3>Rejoindre l’équipe</h3>
-              <p style={{ lineHeight: 1.6 }}>Entraînements dès février, deux pratiques par semaine. L’inscription officielle se fait sur PlayHQ (Rugby Québec).</p>
-              <a className="pill p-sky sm" style={{ marginTop: 14 }} href={LIENS.playhq} target="_blank" rel="noopener">Inscription PlayHQ</a>
-            </div>
+            <div style={{ marginTop: 18 }}><Entrainements variant="card" /></div>
             <div className="card" style={{ marginTop: 18 }}>
               <h3>Réseaux sociaux</h3>
               <p><a href={LIENS.facebook} target="_blank" rel="noopener" style={{ color: "var(--skyd)", fontWeight: 600 }}>Facebook</a>

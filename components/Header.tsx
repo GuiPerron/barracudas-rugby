@@ -59,7 +59,7 @@ export default function Header({ overlay = false }: { overlay?: boolean }) {
             </a>
           ))}
           <div className="mx" style={{ transitionDelay: "420ms" }}>
-            <a href="/contact/?sujet=rejoindre" tabIndex={open ? 0 : -1}>Rejoindre le club</a>
+            <a href={LIENS.inscription} tabIndex={open ? 0 : -1}>Rejoindre le club</a>
             <a href="/commanditaires/#autres" tabIndex={open ? 0 : -1}>Ami du club</a>
             <a href={LIENS.facebook} tabIndex={open ? 0 : -1}>Facebook</a>
             {LIENS.instagram && <a href={LIENS.instagram} tabIndex={open ? 0 : -1}>Instagram</a>}

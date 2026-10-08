@@ -14,7 +14,7 @@ export function MatchBar() {
         <p className="k">Saison 2026 · Ligue P3 A</p>
         <p className="t">Demi-finalistes</p>
         <p className="s">3<sup>e</sup> de la poule · 6 victoires · +247 au différentiel</p>
-        <p className="k" style={{ marginTop: 12, fontSize: 11 }}>Reprise : entraînements en février 2027</p>
+        <p className="k" style={{ marginTop: 12, fontSize: 11 }}>Reprise : entraînements intérieurs en février 2027</p>
       </div>
       <div className="mbs">
         {trois.map((m) => {
@@ -159,11 +159,13 @@ export function Shop() {
       <div className="w shop">
         <div className="rv">
           <SectionTitle light>La boutique</SectionTitle>
-          <p className="lead">Portez les couleurs du club, au terrain comme en ville.</p>
-          <a className="pill p-sky arr" href="/boutique/">Accéder à la boutique <Arrow /></a>
+          <p className="lead">Le t-shirt supporteur officiel, avec nos partenaires au dos. Réservez-le en ligne, payez à la cueillette.</p>
+          <p className="t" style={{ fontSize: 44, color: "var(--sky)", marginBottom: 22 }}>25 $</p>
+          <a className="pill p-sky arr" href="/boutique/">Réserver mon t-shirt <Arrow /></a>
         </div>
-        <a className="feat rv" href="/boutique/" style={{ minHeight: 400 }} aria-label="Boutique">
-          <Photo name="DB25" className="zoom" sizes="(max-width:760px) 100vw, 50vw" />
+        <a className="shop-prod rv" href="/boutique/" aria-label="T-shirt supporteur officiel">
+          <img src="/img/tshirt-devant-1200.webp" srcSet="/img/tshirt-devant-600.webp 600w, /img/tshirt-devant-1200.webp 1200w" sizes="(max-width:760px) 90vw, 40vw" alt="T-shirt supporteur officiel des Barracudas" loading="lazy" />
+          <span className="prod-badge">T-shirt supporteur</span>
         </a>
       </div>
     </section>

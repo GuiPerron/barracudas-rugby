@@ -16,7 +16,7 @@ export default function Calendrier() {
         <div className="w">
           <div className="empty rv">
             <p className="t">Saison 2027 : à venir</p>
-            <p>Le calendrier sera publié dès que Rugby Québec l’aura confirmé. Entraînements dès février 2027.</p>
+            <p>Le calendrier sera publié dès que Rugby Québec l’aura confirmé. Entraînements intérieurs dès février 2027, au parc dès la fin avril.</p>
           </div>
         </div>
       </section>

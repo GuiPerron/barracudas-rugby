@@ -11,8 +11,9 @@ export const NAV = [
 export const LIENS = {
   facebook: "https://www.facebook.com/barracudasrugby/",
   instagram: "https://www.instagram.com/barracudasrugbystjean/",
-  espaceJoueurs: "https://www.playhq.com/", // TODO : phase 2 (portail joueurs) ; PlayHQ en attendant
-  playhq: "https://www.playhq.com/",
+  espaceJoueurs: "https://www.playhq.com/ca", // TODO : phase 2 (portail joueurs) ; PlayHQ en attendant
+  playhq: "https://www.playhq.com/ca/rugby-canada/org/club-de-rugby-les-barracudas-de-st-jean/b74d122f/rugby-quebec-provincial-competition-2026/teams/barracudas/f249bcaa", // fiche de l'équipe 2026 (matchs)
+  inscription: "https://www.playhq.com/ca/rugby-canada/register/394ee3", // inscription au club (saison 2026-2027)
 };
 
 export const COURRIEL = "info@barracudasrugby.com";
@@ -24,8 +25,8 @@ export const HERO = [
     img: "DB2", pos: "30% 30%",
     surtitre: "Recrutement · Saison 2027",
     titre: ["On recrute", "pour 2027 !"],
-    texte: "Entraînements dès février, deux pratiques par semaine.",
-    cta: { label: "Rejoindre l’équipe", href: "/contact/?sujet=rejoindre" },
+    texte: "Entraînements intérieurs dès février, puis au parc dès la fin avril.",
+    cta: { label: "Rejoindre l’équipe", href: "https://www.playhq.com/ca/rugby-canada/register/394ee3" },
     onglet: "On recrute pour 2027",
   },
   {
@@ -47,7 +48,7 @@ export const HERO = [
 ];
 
 export const STORIES = [
-  { img: "DB23", label: "Recrutement", href: "/contact/?sujet=rejoindre" },
+  { img: "DB23", label: "Recrutement", href: "https://www.playhq.com/ca/rugby-canada/register/394ee3" },
   { img: "DB6", label: "Saison 2026", href: "/calendrier/" },
   { img: "SH53", label: "L’équipe", href: "/le-club/" },
   { img: "DB25", label: "Commandites", href: "/commanditaires/" },
@@ -71,7 +72,7 @@ export const CLUB = {
   tuiles: [
     { img: "SH53", label: "Notre histoire", href: "/le-club/#histoire" },
     { img: "DB27", label: "L’équipe 2026", href: "/le-club/#equipe" },
-    { img: "DB23", label: "Rejoindre le club", href: "/contact/?sujet=rejoindre" },
+    { img: "DB23", label: "Rejoindre le club", href: "https://www.playhq.com/ca/rugby-canada/register/394ee3" },
     { img: "DB9", label: "Devenir bénévole", href: "/contact/?sujet=benevole" },
   ],
 };
@@ -82,5 +83,18 @@ export const CA = [
   { poste: "Vice-président", role: "Responsable gouvernance et commanditaires", nom: "Clément Poncin", courriel: "commandites@barracudasrugby.com" },
   { poste: "Administrateur", role: "Direction technique et gestion logistique", nom: "Christophe Morin", courriel: "technique@barracudasrugby.com" },
   { poste: "Administrateur", role: "Trésorier", nom: "Marc-André Lamoureux", courriel: "tresorier@barracudasrugby.com" },
-  { poste: "Administrateur", role: "Secrétaire", nom: "Gabriel Bédard", courriel: "secretariat@barracudasrugby.com" },
+  { poste: "Administrateur", role: "Secrétaire", nom: "Gabriel Bédard", courriel: "secretaire@barracudasrugby.com" },
 ];
+
+// Entraînements (fourni par Guillaume, 8 oct. 2026 : même horaire en 2027)
+export const ENTRAINEMENTS = {
+  saison: "Saison 2027",
+  // Intérieur : horaire et lieu pas encore définis → seulement la mention
+  interieur: "Entraînements intérieurs dès février 2027 · horaire et lieu à confirmer",
+  exterieur: "Au parc dès la fin avril 2027",
+  seances: [{ jour: "Les jeudis", heure: "18 h 30 à 20 h" }],
+  terrain: "Parc Côte à Gladu",
+  adresse: "960, rue de Salières",
+  secteur: "Secteur Saint-Luc, Saint-Jean-sur-Richelieu",
+  carte: "https://maps.app.goo.gl/oqJRvc3WoHxRexDq5",
+};

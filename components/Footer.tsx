@@ -17,8 +17,7 @@ export default function Footer() {
             <a href="/contact/">Infos / Contact</a>
           </div>
           <div className="fcol"><b className="k">Participer</b>
-            <a href="/contact/?sujet=rejoindre">Rejoindre le club</a>
-            <a href={LIENS.playhq} target="_blank" rel="noopener">Inscription PlayHQ</a>
+            <a href={LIENS.inscription} target="_blank" rel="noopener">Rejoindre le club (PlayHQ)</a>
             <a href="/commanditaires/">Commanditaires</a>
             <a href="/boutique/">Boutique</a>
             <a href="/commanditaires/#autres">Ami du club</a>
