@@ -12,6 +12,17 @@ const NOMS: Record<string, string> = { "guillaume.perron": "Guillaume", info: "J
 const nom = (email: string) => NOMS[email.split("@")[0]] ?? email.split("@")[0];
 type Commentaire = { id: number; objet: string; objet_id: number; auteur: string; texte: string; cree_le: string };
 type Comptes = Record<string, number>;
+type Onglet = "accueil" | "taches" | "commandites" | "boutique" | "formulaires";
+const STOCK_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyW52TNHkjxOzpxP601Wvtnqk9EPXt85Hg5f09Hpu_r-lR_2OkVcM0Qek5FfSE_rBpoLLx9Ofg6mk1/pub?gid=0&single=true&output=csv";
+const STOCK_SHEET = "https://docs.google.com/spreadsheets/d/1U47fd-tFfBcbK6MYYQfqbUMstz_kgPBsVIhjy-DfA2o/edit";
+const PRIX_TSHIRT = 25;
+const ETAPES_RES = [
+  { k: "nouveau", label: "Réservé" },
+  { k: "paye", label: "Payé" },
+  { k: "remis", label: "Remis" },
+  { k: "annule", label: "Annulé" },
+];
+const salutation = () => { const h = new Date().getHours(); return h < 12 ? "Bonjour" : h < 18 ? "Bon après-midi" : "Bonsoir"; };
 const RESPONSABLES = ["Jean", "Clément", "Christophe", "Marc-André", "Gabriel", "Guillaume"];
 const COL_TACHES = [
   { k: "a_faire", label: "À faire" },
@@ -46,7 +57,7 @@ const dateFr = (iso?: string) => {
 const argent = (n?: number) => (n ? n.toLocaleString("fr-CA") + " $" : "");
 
 export default function Admin() {
-  const [onglet, setOnglet] = useState<"accueil" | "taches" | "commandites" | "formulaires">("accueil");
+  const [onglet, setOnglet] = useState<Onglet>("accueil");
   const [email, setEmail] = useState("");
   const [erreur, setErreur] = useState("");
   const [taches, setTaches] = useState<Tache[]>([]);
@@ -87,9 +98,10 @@ export default function Admin() {
       </header>
       <nav className="adm-tabs" aria-label="Sections">
         {([
-          ["accueil", "Tableau de bord", 0],
+          ["accueil", "Mon tableau", 0],
           ["taches", "Tâches", ouvertes],
           ["commandites", "Commanditaires", 0],
+          ["boutique", "Boutique", soum.filter((x) => x.type === "precommande" && x.statut === "nouveau").length],
           ["formulaires", "Formulaires reçus", nouveaux],
         ] as const).map(([k, l, n]) => (
           <button key={k} className={onglet === k ? "on" : ""} onClick={() => aller(k)}>{l}{n ? <i>{n}</i> : null}</button>
@@ -99,7 +111,8 @@ export default function Admin() {
         {erreur && <p className="adm-alert">{erreur === "Accès refusé." ? "Accès refusé : ton adresse n'est pas dans la liste des membres du CA." : erreur}</p>}
         {!charge ? <p className="adm-muted">Chargement…</p> : (
           <>
-            {onglet === "accueil" && <Accueil taches={taches} comm={comm} soum={soum} aller={aller} />}
+            {onglet === "accueil" && <Accueil taches={taches} comm={comm} soum={soum} aller={aller} email={email} />}
+            {onglet === "boutique" && <Boutique items={soum} setItems={setSoum} />}
             {onglet === "taches" && <Taches items={taches} setItems={setTaches} email={email} comptes={comptes} setComptes={setComptes} />}
             {onglet === "commandites" && <Commandites items={comm} setItems={setComm} email={email} comptes={comptes} setComptes={setComptes} />}
             {onglet === "formulaires" && <Formulaires items={soum} setItems={setSoum} creerCommandite={async (d) => {
@@ -114,7 +127,40 @@ export default function Admin() {
 }
 
 /* ---------------- Tableau de bord ---------------- */
-function Accueil({ taches, comm, soum, aller }: { taches: Tache[]; comm: Commandite[]; soum: Soumission[]; aller: (o: "taches" | "commandites" | "formulaires") => void }) {
+function Accueil({ taches, comm, soum, aller, email }: { taches: Tache[]; comm: Commandite[]; soum: Soumission[]; aller: (o: Onglet) => void; email: string }) {
+  const moi = email ? nom(email) : "";
+  const tj = today();
+  const mesTaches = taches.filter((x) => x.statut !== "fait" && x.responsable === moi).sort((a, b) => (a.echeance ?? "9999").localeCompare(b.echeance ?? "9999"));
+  const mesRelances = comm.filter((c) => c.responsable === moi && c.prochaine_date && !["refuse", "logo_recu"].includes(c.statut)).sort((a, b) => a.prochaine_date!.localeCompare(b.prochaine_date!));
+  const enRetardMoi = mesTaches.filter((x) => x.echeance && x.echeance < tj).length + mesRelances.filter((c) => c.prochaine_date! <= tj).length;
+  const resume = !moi ? "" : enRetardMoi ? `${enRetardMoi} élément${enRetardMoi > 1 ? "s" : ""} en retard ou dû aujourd’hui.` : mesTaches.length || mesRelances.length ? "Rien en retard. Voici ce qui t’attend." : "Rien d’assigné à ton nom pour l’instant.";
+  const perso = (
+    <section className="adm-hello">
+      <div>
+        <p className="adm-hello-date">{new Date().toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" })}</p>
+        <h1>{salutation()}{moi ? `, ${moi}` : ""} !</h1>
+        <p>{resume}</p>
+      </div>
+      <div className="adm-mine">
+        <div className="adm-card">
+          <h2>Mes tâches <span className="adm-count">{mesTaches.length}</span></h2>
+          {mesTaches.slice(0, 6).map((x) => (
+            <p key={x.id} className="adm-line">{x.echeance ? <span className={"adm-date" + (x.echeance < tj ? " late" : "")}>{dateFr(x.echeance)}</span> : <span className="adm-date">—</span>}{x.titre}<em>{COL_TACHES.find((c) => c.k === x.statut)?.label}</em></p>
+          ))}
+          {!mesTaches.length && <p className="adm-muted">Aucune tâche ouverte à ton nom.</p>}
+          <button className="adm-link-btn" onClick={() => aller("taches")}>Voir toutes les tâches →</button>
+        </div>
+        <div className="adm-card">
+          <h2>Mes relances <span className="adm-count">{mesRelances.length}</span></h2>
+          {mesRelances.slice(0, 6).map((c) => (
+            <p key={c.id} className="adm-line"><span className={"adm-date" + (c.prochaine_date! <= tj ? " late" : "")}>{dateFr(c.prochaine_date)}</span>{c.entreprise}<em>{c.prochaine_action}</em></p>
+          ))}
+          {!mesRelances.length && <p className="adm-muted">Aucune relance de commanditaire à ton nom.</p>}
+          <button className="adm-link-btn" onClick={() => aller("commandites")}>Voir les commanditaires →</button>
+        </div>
+      </div>
+    </section>
+  );
   const t = today();
   const enRetard = taches.filter((x) => x.statut !== "fait" && x.echeance && x.echeance < t);
   const signes = comm.filter((c) => ["signe", "paye", "logo_recu"].includes(c.statut));
@@ -129,6 +175,8 @@ function Accueil({ taches, comm, soum, aller }: { taches: Tache[]; comm: Command
   ];
   return (
     <>
+      {perso}
+      <h2 className="adm-section">Le club en un coup d’œil</h2>
       <div className="adm-tiles">
         {tuiles.map((x) => (
           <button key={x.l} className={"adm-tile" + (x.alerte ? " alert" : "")} onClick={() => aller(x.o)}>
@@ -370,6 +418,95 @@ function FormCommandite({ init, onSave, onDelete }: { init: Partial<Commandite>;
         <button className="adm-btn">Enregistrer</button>
       </div>
     </form>
+  );
+}
+
+/* ---------------- Boutique (stock du Sheet + réservations) ---------------- */
+function Boutique({ items, setItems }: { items: Soumission[]; setItems: React.Dispatch<React.SetStateAction<Soumission[]>> }) {
+  const [stock, setStock] = useState<{ coupe: string; taille: string; n: number }[] | null>(null);
+  const [vue, setVue] = useState("actives");
+  useEffect(() => {
+    fetch(STOCK_CSV, { cache: "no-store" }).then((r) => r.text()).then((csv) => {
+      const rows: { coupe: string; taille: string; n: number }[] = [];
+      csv.split(/\r?\n/).forEach((l) => {
+        const [k, v] = l.split(",").map((x) => x.trim());
+        const m = k?.match(/^T_\d+_([^_]+)_(.+)$/i);
+        if (m && Number.isFinite(Number(v))) rows.push({ coupe: m[1].toLowerCase(), taille: m[2].toUpperCase(), n: Number(v) });
+      });
+      setStock(rows);
+    }).catch(() => setStock([]));
+  }, []);
+  const res = items.filter((s) => s.type === "precommande").map((s) => {
+    let d: Record<string, string> = {};
+    try { d = JSON.parse(s.donnees); } catch {}
+    const q = Number(d.quantite) || 1;
+    const total = Number(String(d.total ?? "").replace(/[^\d.]/g, "")) || q * PRIX_TSHIRT;
+    return { s, d, q, total };
+  });
+  const enAttente = (coupe: string, taille: string) => res.filter((r) => r.s.statut !== "remis" && r.s.statut !== "annule" && (r.d.taille ?? "").toLowerCase() === `${coupe} ${taille}`.toLowerCase()).reduce((a, r) => a + r.q, 0);
+  const aEncaisser = res.filter((r) => r.s.statut === "nouveau").reduce((a, r) => a + r.total, 0);
+  const encaisse = res.filter((r) => ["paye", "remis"].includes(r.s.statut)).reduce((a, r) => a + r.total, 0);
+  const liste = res.filter((r) => vue === "actives" ? ["nouveau", "paye"].includes(r.s.statut) : vue === "toutes" ? true : r.s.statut === vue);
+  async function etape(s: Soumission, statut: string) {
+    setItems((x) => x.map((y) => (y.id === s.id ? { ...y, statut } : y)));
+    await api(`/api/admin/soumissions/${s.id}`, { method: "PATCH", body: JSON.stringify({ statut }) });
+  }
+  const coupes = stock ? [...new Set(stock.map((x) => x.coupe))] : [];
+  return (
+    <>
+      <div className="adm-bar-top">
+        <h1>Boutique · T-shirt 2026</h1>
+        <div className="adm-actions">
+          <span className="adm-total">À encaisser : <b>{aEncaisser} $</b></span>
+          <span className="adm-total">Encaissé : <b>{encaisse} $</b></span>
+          <a className="adm-btn line" href={STOCK_SHEET} target="_blank" rel="noopener">Modifier le stock (Sheet)</a>
+        </div>
+      </div>
+      <section className="adm-card" style={{ marginBottom: 14 }}>
+        <h2>Stock</h2>
+        {stock === null ? <p className="adm-muted">Lecture du Google Sheet…</p> : !stock.length ? <p className="adm-muted">Impossible de lire le Sheet.</p> : (
+          <div className="adm-stock">
+            {coupes.map((c) => (
+              <div key={c}>
+                <p className="adm-stock-h">{c}</p>
+                <div className="adm-stock-row">
+                  {stock.filter((x) => x.coupe === c).map((x) => {
+                    const att = enAttente(c, x.taille);
+                    return (
+                      <div key={x.taille} className={"adm-size" + (x.n === 0 ? " out" : x.n - att <= 1 ? " low" : "")} title={att ? `${att} réservé(s) non remis` : ""}>
+                        <b>{x.taille}</b><span>{x.n}</span>{att > 0 && <small>{att} réservé{att > 1 ? "s" : ""}</small>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <p className="adm-muted" style={{ marginTop: 10 }}>Le stock vient du Google Sheet (mis à jour sur le site en ~5 min). « Réservés » = réservations pas encore remises : baisse le stock dans le Sheet quand le t-shirt est remis.</p>
+      </section>
+      <div className="adm-steps">
+        {[["actives", "En cours"], ...ETAPES_RES.map((e) => [e.k, e.label]), ["toutes", "Toutes"]].map(([k, l]) => (
+          <button key={k} className={vue === k ? "on" : ""} onClick={() => setVue(k)}>{l} <i>{k === "actives" ? res.filter((r) => ["nouveau", "paye"].includes(r.s.statut)).length : k === "toutes" ? res.length : res.filter((r) => r.s.statut === k).length}</i></button>
+        ))}
+      </div>
+      {liste.length === 0 ? <p className="adm-empty">Aucune réservation ici. Les réservations faites sur le site arrivent automatiquement.</p> : (
+        <div className="adm-table-wrap">
+          <table className="adm-table">
+            <thead><tr><th>Nom</th><th>Taille</th><th>Qté</th><th>Total</th><th>Reçue</th><th>Étape</th></tr></thead>
+            <tbody>
+              {liste.map(({ s, d, q, total }) => (
+                <tr key={s.id} style={{ cursor: "default" }}>
+                  <td><b>{d.nom}</b>{d.courriel && <small><a href={`mailto:${d.courriel}`}>{d.courriel}</a></small>}{d.telephone && <small>{d.telephone}</small>}</td>
+                  <td>{d.taille}</td><td>{q}</td><td>{total} $</td><td>{dateFr(s.recu_le)}</td>
+                  <td><select className={"adm-stage r-" + s.statut} value={s.statut} onChange={(e) => etape(s, e.target.value)}>{ETAPES_RES.map((e) => <option key={e.k} value={e.k}>{e.label}</option>)}</select></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
   );
 }
 
