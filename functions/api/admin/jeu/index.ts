@@ -14,16 +14,17 @@ export const onRequestGet = async (ctx: Ctx) => {
   const [j, s, mb] = await d.batch([
     d.prepare(`SELECT * FROM jeux ${tous ? "" : "WHERE statut='published'"} ORDER BY maj_le DESC`),
     d.prepare("SELECT donnees, version FROM jeu_systeme WHERE id=1"),
-    d.prepare(`SELECT email, nom, role, poste FROM jeu_membres ${m.role === "editeur" ? "" : "WHERE email=?"} ORDER BY role, nom`)
+    d.prepare(`SELECT email, nom, role, postes FROM jeu_membres ${m.role === "editeur" ? "" : "WHERE email=?"} ORDER BY role, nom`)
       .bind(...(m.role === "editeur" ? [] : [m.email])),
   ]);
   const sys = s.results[0] as { donnees: string; version: number } | undefined;
   return json({
     moi: m,
     jeux: (j.results as LigneJeu[]).map(versJeu),
-    principes: sys ? JSON.parse(sys.donnees) : [],
+    // Anciennes données (liste de principes en texte) → aucun système défini.
+    systeme: (() => { const d = sys ? JSON.parse(sys.donnees) : null; return d && !Array.isArray(d) && Array.isArray(d.systemes) ? d : { systemes: [] }; })(),
     versionSysteme: sys?.version ?? 0,
-    membres: mb.results,
+    membres: (mb.results as { postes: string }[]).map((x) => ({ ...x, postes: JSON.parse(x.postes || "[]") as number[] })),
   });
 };
 

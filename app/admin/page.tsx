@@ -81,7 +81,10 @@ export default function Admin() {
     setCharge(true);
   }, []);
   useEffect(() => { recharger(); }, [recharger]);
-  useEffect(() => { try { const o = localStorage.getItem("adm-onglet"); if (o) setOnglet(o as typeof onglet); } catch {} }, []);
+  useEffect(() => {
+    if (location.hash.startsWith("#jeu-")) { setOnglet("jeu"); return; } // lien direct vers un jeu
+    try { const o = localStorage.getItem("adm-onglet"); if (o) setOnglet(o as typeof onglet); } catch {}
+  }, []);
   const aller = (o: typeof onglet) => { setOnglet(o); try { localStorage.setItem("adm-onglet", o); } catch {} };
 
   const nouveaux = soum.filter((s) => s.statut === "nouveau").length;

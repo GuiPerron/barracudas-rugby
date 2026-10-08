@@ -5,11 +5,12 @@ import { useCallback, useEffect, useState } from "react";
 import { api, nom, Bulle, Tiroir, type Comptes } from "@/components/admin/commun";
 import { Terrain } from "./Terrain";
 import { Editeur, SelecteurFormation, type Jeu } from "./Editeur";
-import { createFormationPhase, getFormation, type FormationId } from "@/lib/jeu/formations";
-import { categories, positions, type Principle } from "@/lib/jeu/playbook";
+import { createFormationPhase, getFormation, normaliserPhase, type FormationId } from "@/lib/jeu/formations";
+import { categories, positions } from "@/lib/jeu/playbook";
+import { SystemeDeJeu, type DonneesSysteme } from "./Systeme";
 
-type Membre = { email: string; nom: string; role: "editeur" | "lecteur"; poste: number };
-type Etat = { moi: { email: string; ca: boolean; role: "editeur" | "lecteur" | null }; jeux: Jeu[]; principes: Principle[]; versionSysteme: number; membres: Membre[] };
+type Membre = { email: string; nom: string; role: "editeur" | "lecteur"; postes: number[] };
+type Etat = { moi: { email: string; ca: boolean; role: "editeur" | "lecteur" | null }; jeux: Jeu[]; systeme: DonneesSysteme; versionSysteme: number; membres: Membre[] };
 type Vue = "biblio" | "editeur" | "systeme" | "membres";
 
 export default function CahierJeu({ comptes, setComptes }: { comptes: Comptes; setComptes: React.Dispatch<React.SetStateAction<Comptes>> }) {
@@ -25,10 +26,22 @@ export default function CahierJeu({ comptes, setComptes }: { comptes: Comptes; s
   const [message, setMessage] = useState("");
 
   const charger = useCallback(async () => {
-    try { setEtat(await api<Etat>("/api/admin/jeu")); setErreur(""); }
-    catch (e) { setErreur((e as Error).message); }
+    try {
+      const e = await api<Etat>("/api/admin/jeu");
+      e.jeux = e.jeux.map((j) => ({ ...j, phases: j.phases.map(normaliserPhase) })); // anciennes mêlées/touches à l’échelle
+      setEtat(e); setErreur("");
+      // Lien direct : /admin/#jeu-12 ouvre ce jeu.
+      const m = location.hash.match(/^#jeu-(\d+)$/);
+      const j = m && e.jeux.find((x) => x.id === m[1]);
+      if (j) { setBrouillon(structuredClone(j)); setVue("editeur"); }
+    } catch (e) { setErreur((e as Error).message); }
   }, []);
   useEffect(() => { charger(); }, [charger]);
+  // Garde l'adresse à jour pour pouvoir copier le lien du jeu ouvert.
+  useEffect(() => {
+    const cible = vue === "editeur" && brouillon && /^\d+$/.test(brouillon.id) ? `#jeu-${brouillon.id}` : "";
+    if (location.hash !== cible && (cible || location.hash.startsWith("#jeu"))) history.replaceState(null, "", cible || location.pathname);
+  }, [vue, brouillon?.id]);
   useEffect(() => {
     if (!modifie) return;
     const h = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
@@ -113,7 +126,7 @@ export default function CahierJeu({ comptes, setComptes }: { comptes: Comptes; s
                   <div className="jeu-mini"><Terrain phase={j.phases[0]} compact focused /><span>{j.category}</span></div>
                   <div className="jeu-carte-info">
                     <h3>{j.title}</h3>
-                    <p>{j.phases.length} phase{j.phases.length > 1 ? "s" : ""}{j.updatedBy && !j.example ? ` · ${nom(j.updatedBy)}` : ""}</p>
+                    <p>{j.phases.length} étape{j.phases.length > 1 ? "s" : ""}{j.updatedBy && !j.example ? ` · ${nom(j.updatedBy)}` : ""}</p>
                     <div>
                       <span className={`jeu-statut ${j.example ? "exemple" : j.status}`}>{j.example ? "Exemple" : j.status === "draft" ? "Brouillon" : "Publié"}</span>
                       <Bulle n={comptes[`jeux:${j.id}`]} />
@@ -127,12 +140,15 @@ export default function CahierJeu({ comptes, setComptes }: { comptes: Comptes; s
       )}
 
       {vue === "editeur" && brouillon && (
-        <Editeur key={brouillon.id} jeu={brouillon} editable={editeur} busy={occupe} dirty={modifie} email={etat.moi.email} comptes={comptes} setComptes={setComptes}
+        <Editeur key={brouillon.id} jeu={brouillon} systemes={etat.systeme.systemes} editable={editeur} busy={occupe} dirty={modifie} email={etat.moi.email} comptes={comptes} setComptes={setComptes}
           onChange={(j) => { setBrouillon(j); setModifie(true); }} onSave={enregistrer} onBack={() => garde(() => setVue("biblio"))}
           onDuplicate={dupliquer} onDelete={() => supprimer(brouillon)} />
       )}
 
-      {vue === "systeme" && <Systeme etat={etat} editable={editeur} setEtat={setEtat} setModifie={setModifie} modifie={modifie} setMessage={setMessage} />}
+      {vue === "systeme" && (
+        <SystemeDeJeu donnees={etat.systeme} version={etat.versionSysteme} editable={editeur} modifie={modifie} setModifie={setModifie}
+          onEnregistre={(d, v) => { setEtat((e) => e && { ...e, systeme: d, versionSysteme: v }); setMessage("Système de jeu enregistré."); }} />
+      )}
       {vue === "membres" && editeur && <Membres etat={etat} recharger={charger} />}
 
       {creer && (
@@ -167,51 +183,8 @@ function CreerJeu({ fermer, creer }: { fermer: () => void; creer: (titre: string
   );
 }
 
-function Systeme({ etat, editable, setEtat, modifie, setModifie, setMessage }: {
-  etat: Etat; editable: boolean; setEtat: React.Dispatch<React.SetStateAction<Etat | null>>; modifie: boolean; setModifie: (b: boolean) => void; setMessage: (m: string) => void;
-}) {
-  const [p, setP] = useState<Principle[]>(etat.principes);
-  const [occupe, setOccupe] = useState(false);
-  const maj = (id: string, champ: "title" | "text", v: string) => { setP((x) => x.map((a) => (a.id === id ? { ...a, [champ]: v } : a))); setModifie(true); };
-  async function enregistrer() {
-    setOccupe(true);
-    try {
-      const r = await api<{ principes: Principle[]; version: number }>("/api/admin/jeu/systeme", { method: "PUT", body: JSON.stringify({ principes: p, version: etat.versionSysteme }) });
-      setEtat((e) => e && { ...e, principes: r.principes, versionSysteme: r.version }); setModifie(false); setMessage("Système de jeu enregistré.");
-    } catch (e) { alert((e as Error).message); }
-    setOccupe(false);
-  }
-  return (
-    <>
-      <div className="adm-bar-top">
-        <div><h1>Système de jeu</h1><p className="adm-muted">Les principes qui relient tous nos jeux.</p></div>
-        {editable && (
-          <div className="jeu-ligne">
-            <button className="adm-btn line sm" disabled={p.length >= 20} onClick={() => { setP([...p, { id: crypto.randomUUID(), title: "Nouveau principe", text: "" }]); setModifie(true); }}>+ Principe</button>
-            <button className="adm-btn" disabled={occupe || !modifie} onClick={enregistrer}>{occupe ? "Enregistrement…" : "Enregistrer"}</button>
-          </div>
-        )}
-      </div>
-      <div className="jeu-principes">
-        {p.map((x, n) => (
-          <section key={x.id} className="adm-card jeu-principe">
-            <span className="jeu-num">{String(n + 1).padStart(2, "0")}</span>
-            {editable ? (
-              <>
-                <input aria-label={`Titre du principe ${n + 1}`} maxLength={120} value={x.title} onChange={(e) => maj(x.id, "title", e.target.value)} />
-                <textarea aria-label={`Description du principe ${n + 1}`} rows={5} maxLength={6000} value={x.text} onChange={(e) => maj(x.id, "text", e.target.value)} />
-                <button className="jeu-lien" onClick={() => { if (confirm("Retirer ce principe ?")) { setP(p.filter((a) => a.id !== x.id)); setModifie(true); } }}>Retirer</button>
-              </>
-            ) : <><h3>{x.title}</h3><p>{x.text}</p></>}
-          </section>
-        ))}
-      </div>
-    </>
-  );
-}
-
 function Membres({ etat, recharger }: { etat: Etat; recharger: () => Promise<void> }) {
-  const vide: Membre = { email: "", nom: "", role: "lecteur", poste: 9 };
+  const vide: Membre = { email: "", nom: "", role: "lecteur", postes: [] };
   const [edit, setEdit] = useState<(Membre & { existe?: boolean }) | null>(null);
   async function enregistrer(m: Membre) {
     try { await api("/api/admin/jeu/membres", { method: "POST", body: JSON.stringify(m) }); setEdit(null); await recharger(); }
@@ -233,7 +206,7 @@ function Membres({ etat, recharger }: { etat: Etat; recharger: () => Promise<voi
           <div className="jeu-membre" key={m.email}>
             <div className="adm-avatar" aria-hidden="true">{m.nom.slice(0, 1)}</div>
             <div><strong>{m.nom}</strong><small>{m.email}</small></div>
-            <span className="adm-muted">{m.poste} · {positions[m.poste - 1]}</span>
+            <span className="adm-muted">{m.postes.length ? m.postes.map((n) => `${n} · ${positions[n - 1]}`).join(", ") : "Aucun poste"}</span>
             <span className={`jeu-role ${m.role}`}>{m.role === "editeur" ? "Peut modifier" : "Consulte"}</span>
             <button className="adm-btn line sm" onClick={() => setEdit({ ...m, existe: true })}>Modifier</button>
           </div>
@@ -251,11 +224,18 @@ function Membres({ etat, recharger }: { etat: Etat; recharger: () => Promise<voi
                 <option value="lecteur">Consulte · regarde et commente seulement</option>
               </select>
             </label>
-            <label>Poste principal
-              <select value={edit.poste} onChange={(e) => setEdit({ ...edit, poste: Number(e.target.value) })}>
-                {positions.map((p, n) => <option key={n} value={n + 1}>{n + 1} · {p}</option>)}
-              </select>
-            </label>
+            <fieldset className="jeu-postes">
+              <legend>Postes joués <span className="adm-muted">(coche-en autant que tu veux)</span></legend>
+              {positions.map((p, n) => {
+                const num = n + 1; const on = edit.postes.includes(num);
+                return (
+                  <button type="button" key={num} aria-pressed={on} className={on ? "on" : ""}
+                    onClick={() => setEdit({ ...edit, postes: on ? edit.postes.filter((x) => x !== num) : [...edit.postes, num].sort((a, b) => a - b) })}>
+                    <b>{num}</b>{p}
+                  </button>
+                );
+              })}
+            </fieldset>
             <div className="adm-form-actions">
               {edit.existe && edit.email !== etat.moi.email && <button type="button" className="adm-btn line danger" onClick={() => retirer(edit)}>Retirer</button>}
               <button className="adm-btn">Enregistrer</button>
@@ -277,7 +257,7 @@ function Guide() {
       <ol>
         <li><b>1</b><div><strong>Crée un jeu</strong><span>Clique « + Créer un jeu » et choisis un placement de départ (mêlée, touche…).</span></div></li>
         <li><b>2</b><div><strong>Place les joueurs</strong><span>Glisse les joueurs bleus. Choisis « Course » ou « Passe » et trace une flèche avec le doigt ou la souris.</span></div></li>
-        <li><b>3</b><div><strong>Ajoute les phases</strong><span>« + Ajouter une phase » pour la suite du jeu. « ▶ Lire le jeu » montre l’animation.</span></div></li>
+        <li><b>3</b><div><strong>Ajoute les étapes</strong><span>Trace des flèches puis « + Étape suivante » : les joueurs avancent au bout de leurs flèches. « ▶ Lire le jeu » montre l’animation.</span></div></li>
         <li><b>4</b><div><strong>Enregistre et publie</strong><span>Un brouillon reste entre nous. « Publier pour l’équipe » le rend visible aux joueurs.</span></div></li>
       </ol>
       <button className="adm-x" aria-label="Masquer l’aide" onClick={() => { setOuvert(false); try { localStorage.setItem("jeu-guide", "ferme"); } catch {} }}>×</button>

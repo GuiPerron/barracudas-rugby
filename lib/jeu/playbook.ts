@@ -1,6 +1,7 @@
 // Modèle de données du cahier de jeu (adapté de l’outil « barracudas-playbook »).
 export type Player = { id: number; x: number; y: number; team: "home" | "away" };
 export type Trail = { id: string; x1: number; y1: number; x2: number; y2: number; type: "run" | "pass" | "kick" };
+export type Annotation = { id: string; x: number; y: number; texte: string };
 export type Phase = {
   setup?: string;
   id: string;
@@ -10,6 +11,8 @@ export type Phase = {
   trails: Trail[];
   ball: { x: number; y: number };
   roles: Record<string, string>;
+  /** Annotations écrites sur le terrain. */
+  notes?: Annotation[];
 };
 export type Play = {
   id: string;

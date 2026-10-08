@@ -705,3 +705,52 @@ a, button, .story, .tile, .ncard, .feat, .brief, .tierc { cursor: pointer }
   .jeu-membre > .adm-muted, .jeu-membre > .jeu-role { display: none }
   .jeu-legende .sens { margin-left: 0 }
 }
+.jeu-cadre { position: relative }
+.jeu-terrain .crayon { cursor: crosshair }
+.jeu-bulle { position: absolute; left: 12px; right: 12px; bottom: 12px; max-width: 460px; background: #fff; color: var(--ink); border-radius: 10px; padding: 12px 14px; font-size: 13px; line-height: 1.45; box-shadow: 0 8px 24px rgba(0,0,0,.3); border-left: 4px solid var(--sky) }
+.jeu-bulle strong { color: var(--navy); display: block; margin-bottom: 2px }
+.jeu-bulle button { display: block; margin-top: 8px; border: 0; background: var(--navy); color: #fff; font: 700 12px var(--fb); padding: 6px 12px; border-radius: 7px; cursor: pointer }
+.jeu-postes { border: 0; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 6px }
+.jeu-postes legend { font: 600 13px var(--fb); color: var(--navy); margin-bottom: 6px; grid-column: 1 / -1 }
+.jeu-postes button { display: flex; align-items: center; gap: 8px; border: 0; background: var(--light); border-radius: 8px; padding: 8px 10px; font: 600 13px var(--fb); color: var(--navy); cursor: pointer; text-align: left }
+.jeu-postes button b { flex: none; width: 24px; height: 24px; border-radius: 50%; background: #fff; display: grid; place-items: center; font-size: 12px }
+.jeu-postes button.on { background: var(--navy); color: #fff } .jeu-postes button.on b { background: #68CEF6; color: #0E1D35 }
+.jeu-sys-titre { display: flex; align-items: center; gap: 12px; margin-bottom: 12px }
+.jeu-sys-titre input { flex: 1; font: italic 800 22px var(--ft) !important; text-transform: uppercase; color: var(--navy) !important }
+.jeu-sys-titre h2 { font: italic 800 24px var(--ft); text-transform: uppercase; color: var(--navy) }
+.jeu-sys-code { flex: none; background: var(--navy); color: #68CEF6; font: 800 22px var(--fb); letter-spacing: .04em; padding: 6px 14px; border-radius: 10px }
+.jeu-sys-structures { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 12px; font: 600 13px var(--fb); color: var(--navy) }
+.jeu-sys-structures > button { border: 0; background: var(--light); padding: 7px 12px; border-radius: 999px; font: 700 13px var(--fb); color: var(--navy); cursor: pointer }
+.jeu-sys-structures > button.on { background: var(--navy); color: #fff }
+.jeu-sys-structures form { display: flex; gap: 6px; align-items: center }
+.jeu-sys-structures form input { width: 150px; padding: 6px 10px !important }
+.jeu-legende .l-pod { width: 18px; height: 12px; border-radius: 4px; border: 1.5px dashed #1F6F94; background: rgba(104,206,246,.15) }
+.jeu-sys-h { font: 700 11px var(--fb); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 4px 0 10px }
+.jeu-panneau .jeu-sys-h:not(:first-child) { margin-top: 18px }
+.jeu-panneau > textarea { width: 100%; box-sizing: border-box }
+.jeu-pods { display: grid; gap: 10px }
+.jeu-pod { background: var(--light); border-radius: 10px; padding: 10px; display: grid; gap: 8px }
+.jeu-pod header { display: flex; align-items: center; gap: 8px }
+.jeu-pod header b { width: 24px; height: 24px; border-radius: 50%; background: var(--navy); color: #68CEF6; display: grid; place-items: center; font-size: 12px }
+.jeu-pod header strong { color: var(--navy); font-size: 14px } .jeu-pod header span { margin-left: auto; font-size: 12px; color: var(--muted) }
+.jeu-pod select, .jeu-pod-role { width: 100%; box-sizing: border-box; font-size: 13px !important }
+.jeu-puces { display: flex; flex-wrap: wrap; gap: 6px }
+.jeu-puce { display: inline-flex; align-items: center; gap: 6px; background: #fff; border-radius: 999px; padding: 3px 6px 3px 3px; font: 600 12px var(--fb); color: var(--navy); box-shadow: 0 0 0 1px var(--line) }
+.jeu-puce b { width: 22px; height: 22px; border-radius: 50%; background: #68CEF6; color: #0E1D35; display: grid; place-items: center; font-size: 11px }
+.jeu-puce.libre b { background: var(--navy); color: #fff }
+.jeu-puce button { border: 0; background: none; color: var(--muted); font-size: 15px; line-height: 1; cursor: pointer; padding: 0 2px }
+.jeu-lien.danger { color: #B42318; margin-top: 16px }
+.jeu-barre { gap: 12px; flex-wrap: wrap }
+.jeu-nom-etape { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 220px }
+.jeu-nom-etape span { flex: none; background: var(--navy); color: #68CEF6; font: 800 12px var(--fb); letter-spacing: .06em; text-transform: uppercase; padding: 6px 10px; border-radius: 7px }
+.jeu-nom-etape input { flex: 1; min-width: 0; font: 700 15px var(--fb) !important; color: var(--navy) !important; border-style: dashed !important }
+.jeu-nom-etape strong { color: var(--navy); font-size: 15px }
+.jeu-etapes-titre { display: grid; gap: 2px; margin: 4px 0 10px } .jeu-etapes-titre strong { color: var(--navy); font-size: 14px } .jeu-etapes-titre span { font-size: 12px; color: var(--muted) }
+.jeu-phases { align-items: stretch }
+.jeu-etape { display: flex; align-items: center; gap: 6px; flex: none }
+.jeu-fleche { color: var(--skyd); font-size: 18px; font-weight: 700 }
+.jeu-phases .jeu-etape > button { width: 150px; padding: 6px; display: grid; gap: 3px }
+.jeu-vignette { border-radius: 6px; overflow: hidden; background: #132644; margin-bottom: 3px }
+.jeu-phases .jeu-etape > button.ajout { height: 100%; min-height: 120px; place-content: center; text-align: center; gap: 4px }
+.jeu-phases .ajout b { font-size: 26px; line-height: 1; color: var(--skyd) }
+.jeu-phases .ajout small { font: 500 11px var(--fb); color: var(--muted) }

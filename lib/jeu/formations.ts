@@ -78,12 +78,12 @@ export const formationTemplates: FormationTemplate[] = [
 export function getFormation(id: FormationId) {
   return formationTemplates.find((t) => t.id === id)!;
 }
-export function canZoomSetup(setup?: string) {
-  return !!setup && (setup.startsWith("lineout") || setup.startsWith("scrum"));
+// Les phases arrêtées (mêlée, touche) sont dessinées en schéma, pas à l'échelle : tous les joueurs ont la même taille
+// et restent lisibles sur le terrain entier. Plus de vue rapprochée.
+export function canZoomSetup(_setup?: string) {
+  return false;
 }
-export function setupCamera(setup?: string) {
-  if (setup?.startsWith("lineout")) return { x: 410, y: 20, w: 180, h: 150 };
-  if (setup?.startsWith("scrum")) return { x: 400, y: setup === "scrum-left" ? 100 : 220, w: 200, h: 160 };
+export function setupCamera(_setup?: string) {
   return { x: 0, y: 0, w: 1000, h: 600 };
 }
 const lineoutOrder = [1, 4, 3, 6, 5, 7, 8];
@@ -109,20 +109,22 @@ export function createFormationPhase(id: FormationId): Phase {
   );
   if (id.startsWith("lineout")) {
     const order = lineoutNumbers(id);
-    const home = Array.from({ length: 15 }, (_, i) => [400 - Math.floor(i / 5) * 35, 220 + (i % 5) * 65]);
-    const away = home.map(([x, y]) => [1000 - x, y]);
+    const fin = 110 + (order.length - 1) * 40;
+    // Arrières à 10 m (schéma) : ligne en diagonale, ailier fermé près de la touche.
+    const home: number[][] = Array.from({ length: 15 }, () => [300, 300]);
+    const pos: Record<number, number[]> = { 10: [360, 200], 11: [380, 80], 12: [320, 270], 13: [285, 340], 14: [250, 420], 15: [200, 300] };
+    if (id === "lineout5") { pos[7] = [400, 340]; pos[8] = [400, 400]; }
+    for (const [n, xy] of Object.entries(pos)) home[Number(n) - 1] = xy;
     order.forEach((n, i) => {
-      const y = 90 + (i * 64) / (order.length - 1);
-      home[n - 1] = [496, y];
-      away[n - 1] = [504, y];
+      home[n - 1] = [480, 110 + i * 40];
       roles[String(n)] =
         `Prendre la place ${i + 1} dans l’alignement. Confirmer la cible et le rôle de sauteur ou de soutien annoncés par le coach.`;
     });
-    home[1] = [500, 42];
-    away[1] = [516, 71];
-    home[8] = [480, 143];
-    away[8] = [520, 143];
-    ball = { x: 500, y: 31 };
+    home[1] = [500, 40];
+    home[8] = [425, Math.round((110 + fin) / 2)];
+    const away = home.map(([x, y]) => [1000 - x, y]);
+    away[1] = [550, 75];
+    ball = { x: 515, y: 40 };
     players = playersFrom(home, away);
     roles["2"] = "Annoncer la combinaison et lancer depuis la touche vers la cible convenue.";
     roles["9"] = "Attendre à 2 m de l’alignement comme relayeur, recevoir et connecter le 10.";
@@ -132,34 +134,29 @@ export function createFormationPhase(id: FormationId): Phase {
           "Attendre à au moins 10 m de la ligne de remise en jeu. Conserver la profondeur et se rendre disponible à la sortie."),
     );
   } else if (id.startsWith("scrum")) {
-    const y = id === "scrum-left" ? 180 : 300;
+    const y = id === "scrum-left" ? 190 : 300;
     const home = [
-      [493, y - 19],
-      [493, y],
-      [493, y + 19],
-      [478, y - 10],
-      [478, y + 10],
-      [478, y - 29],
-      [478, y + 29],
-      [461, y],
-      [497, y - 52],
-      [385, 260],
-      [355, 80],
-      [365, 335],
-      [340, 410],
-      [300, 510],
-      [240, 300],
+      [478, y - 38],
+      [478, y],
+      [478, y + 38],
+      [440, y - 19],
+      [440, y + 19],
+      [440, y - 57],
+      [440, y + 57],
+      [402, y],
+      [470, y - 105],
+      [360, y - 40],
+      [370, 70],
+      [330, y + 40],
+      [295, y + 110],
+      [255, Math.min(520, y + 190)],
+      [210, y + 20],
     ];
-    if (id === "scrum-left") {
-      home[9] = [385, 280];
-      home[11] = [365, 345];
-      home[12] = [345, 410];
-    }
     players = playersFrom(
       home,
       home.map(([x, py], i) => [1000 - x, i < 8 ? 2 * y - py : py]),
     );
-    ball = { x: 500, y: y - 42 };
+    ball = { x: 492, y: y - 92 };
     const jobs = [
       "Se lier avec le talonneur dans la première ligne gauche.",
       "Se placer entre les piliers et coordonner la conquête.",
@@ -202,6 +199,16 @@ export function createFormationPhase(id: FormationId): Phase {
   return { id: crypto.randomUUID(), name: info.label, note: info.note, players, trails: [], ball, roles, setup: id };
 }
 // Replacing a placement never discards written instructions or changes other phases.
+/** Anciennes phases arrêtées dessinées à l'échelle (joueurs collés) → schéma lisible. */
+export function normaliserPhase(p: Phase): Phase {
+  if (!p.setup || !(p.setup.startsWith("lineout") || p.setup.startsWith("scrum"))) return p;
+  const avants = p.players.filter((j) => j.team === "home" && j.id <= 8);
+  let min = Infinity;
+  for (const a of avants) for (const b of avants) if (a !== b) min = Math.min(min, Math.hypot(a.x - b.x, a.y - b.y));
+  if (min >= 20) return p;
+  const t = createFormationPhase(p.setup as FormationId);
+  return { ...p, players: t.players, ball: t.ball };
+}
 export function replacePhasePlacement(current: Phase, id: FormationId): Phase {
   const template = createFormationPhase(id);
   return { ...current, players: template.players, ball: template.ball, trails: [], setup: id };

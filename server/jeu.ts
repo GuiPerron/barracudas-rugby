@@ -1,7 +1,8 @@
 /// <reference types="@cloudflare/workers-types" />
 // Cahier de jeu : tables D1, rôles et validation des données envoyées par le navigateur.
 import { db, type Env } from "./db";
-import { examplePlays, examplePrinciples } from "../lib/jeu/playbook";
+import { examplePlays } from "../lib/jeu/playbook";
+import { nouveauSysteme } from "../lib/jeu/systeme";
 import { formationIds } from "../lib/jeu/formations";
 
 export type Role = "editeur" | "lecteur";
@@ -17,7 +18,7 @@ const SCHEMA = [
      id INTEGER PRIMARY KEY CHECK (id = 1), donnees TEXT NOT NULL, version INTEGER NOT NULL DEFAULT 1,
      maj_par TEXT, maj_le TEXT NOT NULL DEFAULT (datetime('now')))`,
   `CREATE TABLE IF NOT EXISTS jeu_membres (
-     email TEXT PRIMARY KEY, nom TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'lecteur', poste INTEGER NOT NULL DEFAULT 9,
+     email TEXT PRIMARY KEY, nom TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'lecteur', postes TEXT NOT NULL DEFAULT '[]',
      ajoute_par TEXT, ajoute_le TEXT NOT NULL DEFAULT (datetime('now')))`,
 ];
 
@@ -33,7 +34,7 @@ export async function dbJeu(env: Env): Promise<D1Database> {
   if (pret) return d;
   await d.batch(SCHEMA.map((s) => d.prepare(s)));
   // Initialisation unique : la ligne jeu_systeme sert de verrou (INSERT OR IGNORE).
-  const init = await d.prepare("INSERT OR IGNORE INTO jeu_systeme (id, donnees, maj_par) VALUES (1, ?, 'initialisation')").bind(JSON.stringify(examplePrinciples)).run();
+  const init = await d.prepare("INSERT OR IGNORE INTO jeu_systeme (id, donnees, maj_par) VALUES (1, ?, 'initialisation')").bind(JSON.stringify({ systemes: [nouveauSysteme("1-4-4-1")] })).run();
   if (init.meta.changes) {
     await d.batch([
       ...examplePlays.map((p) => d.prepare("INSERT INTO jeux (titre, categorie, statut, donnees, cree_par, maj_par) VALUES (?,?,?,?, 'exemple', 'exemple')")
@@ -41,8 +42,25 @@ export async function dbJeu(env: Env): Promise<D1Database> {
       ...EDITEURS_INITIAUX.map(([e, n]) => d.prepare("INSERT OR IGNORE INTO jeu_membres (email, nom, role, ajoute_par) VALUES (?,?, 'editeur', 'initialisation')").bind(e, n)),
     ]);
   }
+  await migrer(d);
   pret = true;
   return d;
+}
+
+/** Mises à jour de la base déjà en ligne (première version du cahier, 8 oct. 2026). */
+async function migrer(d: D1Database) {
+  // 1. Plusieurs postes par membre : colonne « postes » (liste JSON) au lieu de « poste ».
+  const cols = (await d.prepare("PRAGMA table_info(jeu_membres)").all<{ name: string }>()).results.map((c) => c.name);
+  if (!cols.includes("postes")) {
+    await d.prepare("ALTER TABLE jeu_membres ADD COLUMN postes TEXT NOT NULL DEFAULT '[]'").run();
+    if (cols.includes("poste")) await d.prepare("UPDATE jeu_membres SET postes = '[' || poste || ']'").run();
+  }
+  // 2. Système de jeu : l'ancienne liste de principes en texte devient une structure 1-4-4-1.
+  const sys = await d.prepare("SELECT donnees FROM jeu_systeme WHERE id=1").first<{ donnees: string }>();
+  if (sys && Array.isArray(JSON.parse(sys.donnees))) {
+    await d.prepare("UPDATE jeu_systeme SET donnees=?, version=version+1, maj_par='migration' WHERE id=1")
+      .bind(JSON.stringify({ systemes: [nouveauSysteme("1-4-4-1")] })).run();
+  }
 }
 
 export const estCA = (env: Env, email: string) =>
@@ -88,6 +106,10 @@ export function validerJeu(v: unknown) {
     const b = ph.ball as Record<string, unknown>; ok(!!b, "Ballon manquant."); coord(b.x); coord(b.y);
     ok(!!ph.roles && typeof ph.roles === "object", "Consignes invalides.");
     for (const [k, r] of Object.entries(ph.roles as object)) { ok(/^(?:[1-9]|1[0-5])$/.test(k), "Poste invalide."); texte(r, 4000); }
+    if (ph.notes !== undefined) {
+      ok(Array.isArray(ph.notes) && ph.notes.length <= 30, "Trop d’annotations.");
+      for (const n of ph.notes as Record<string, unknown>[]) { texte(n.id, 100); texte(n.texte, 80, 1); coord(n.x); coord(n.y); }
+    }
   }
   // On ne garde que les champs connus (rien d'autre n'est stocké).
   return {
@@ -97,13 +119,38 @@ export function validerJeu(v: unknown) {
       players: (ph.players as Record<string, unknown>[]).map((j) => ({ id: j.id, x: j.x, y: j.y, team: j.team })),
       trails: (ph.trails as Record<string, unknown>[]).map((t) => ({ id: t.id, x1: t.x1, y1: t.y1, x2: t.x2, y2: t.y2, type: t.type })),
       ball: { x: (ph.ball as { x: number }).x, y: (ph.ball as { y: number }).y }, roles: ph.roles,
+      notes: ((ph.notes as Record<string, unknown>[] | undefined) ?? []).map((n) => ({ id: n.id, x: n.x, y: n.y, texte: n.texte })),
     })),
   };
 }
 
-export function validerPrincipes(v: unknown) {
-  ok(Array.isArray(v) && v.length <= 20, "Maximum 20 principes.");
-  return (v as Record<string, unknown>[]).map((p) => ({ id: texte(p.id, 100, 1), title: texte(p.title, 120, 1), text: texte(p.text, 6000) }));
+/** Système de jeu : { systemes: [{ id, nom, pods, rolesPods, note, placement }] } */
+export function validerSysteme(v: unknown) {
+  ok(!!v && typeof v === "object" && Array.isArray((v as { systemes?: unknown }).systemes), "Système invalide.");
+  const liste = (v as { systemes: Record<string, unknown>[] }).systemes;
+  ok(liste.length <= 10, "Maximum 10 systèmes.");
+  return {
+    systemes: liste.map((x) => {
+      texte(x.id, 100, 1); texte(x.nom, 80, 1); texte(x.note ?? "", 4000);
+      ok(Array.isArray(x.pods) && x.pods.length >= 1 && x.pods.length <= 8, "Entre 1 et 8 pods.");
+      const vus = new Set<number>();
+      for (const pod of x.pods as unknown[]) {
+        ok(Array.isArray(pod) && pod.length >= 1 && pod.length <= 6, "Chaque pod a de 1 à 6 joueurs.");
+        for (const n of pod as unknown[]) { ok(Number.isInteger(n) && (n as number) >= 1 && (n as number) <= 15 && !vus.has(n as number), "Numéro de joueur invalide ou en double."); vus.add(n as number); }
+      }
+      ok(Array.isArray(x.rolesPods) && (x.rolesPods as unknown[]).length === (x.pods as unknown[]).length, "Rôles des pods invalides.");
+      (x.rolesPods as unknown[]).forEach((r) => texte(r, 300));
+      let placement: { id: number; x: number; y: number; team: "home" }[] | null = null;
+      if (x.placement !== null && x.placement !== undefined) {
+        ok(Array.isArray(x.placement) && (x.placement as unknown[]).length <= 15, "Placement invalide.");
+        placement = (x.placement as Record<string, unknown>[]).map((j) => {
+          ok(Number.isInteger(j.id) && (j.id as number) >= 1 && (j.id as number) <= 15, "Numéro de joueur invalide.");
+          return { id: j.id as number, x: coord(j.x), y: coord(j.y), team: "home" as const };
+        });
+      }
+      return { id: x.id as string, nom: (x.nom as string).trim(), pods: x.pods as number[][], rolesPods: x.rolesPods as string[], note: (x.note as string) ?? "", placement };
+    }),
+  };
 }
 
 /** Ligne D1 → objet Play envoyé au navigateur. */
