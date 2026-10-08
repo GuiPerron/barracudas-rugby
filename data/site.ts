@@ -78,7 +78,7 @@ export const CLUB = {
 
 // Conseil d'administration 2026-2027 (fourni par Guillaume, 8 oct. 2026)
 export const CA = [
-  { poste: "Président", role: "Direction générale et communications", nom: "Jean Forget", courriel: "president@barracudasrugby.com" },
+  { poste: "Président", role: "Direction générale et communications", nom: "Jean Forget", courriel: "info@barracudasrugby.com" },
   { poste: "Vice-président", role: "Responsable gouvernance et commanditaires", nom: "Clément Poncin", courriel: "commandites@barracudasrugby.com" },
   { poste: "Administrateur", role: "Direction technique et gestion logistique", nom: "Christophe Morin", courriel: "technique@barracudasrugby.com" },
   { poste: "Administrateur", role: "Trésorier", nom: "Marc-André Lamoureux", courriel: "tresorier@barracudasrugby.com" },
