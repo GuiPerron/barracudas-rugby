@@ -8,3 +8,4 @@ photos-src/*.jpg
 next-env.d.ts
 *.tsbuildinfo
 _import/
+.dev.vars

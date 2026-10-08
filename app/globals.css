@@ -418,3 +418,108 @@ a, button, .story, .tile, .ncard, .feat, .brief, .tierc { cursor: pointer }
   .partners-list { grid-template-columns: 1fr 1fr }
   .shop-prod { min-height: 300px }
 }
+
+/* ================= Admin du CA ================= */
+.adm { min-height: 100vh; background: var(--light); color: var(--ink); font-family: var(--fb) }
+.adm-top { background: var(--navy); color: #fff; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 28px }
+.adm-brand { display: flex; align-items: center; gap: 12px; font-size: 15px; color: #C9D7E6 }
+.adm-brand svg { height: 36px; width: auto; fill: var(--sky) }
+.adm-brand b { color: #fff; font-family: var(--ft); font-style: italic; text-transform: uppercase; font-size: 19px; letter-spacing: .02em }
+.adm-user { display: flex; align-items: center; gap: 14px; font-size: 13px; color: #9FB4CB }
+.adm-tabs { background: #fff; border-bottom: 1px solid var(--line); display: flex; gap: 4px; padding: 0 20px; overflow-x: auto; position: sticky; top: 0; z-index: 5 }
+.adm-tabs button { all: unset; cursor: pointer; padding: 15px 14px 13px; font: 600 14px var(--fb); color: var(--muted); border-bottom: 3px solid transparent; white-space: nowrap; display: flex; align-items: center; gap: 8px }
+.adm-tabs button:hover { color: var(--navy) }
+.adm-tabs button.on { color: var(--navy); border-color: var(--sky) }
+.adm-tabs i, .adm-steps i { font-style: normal; font-size: 11px; font-weight: 700; background: var(--navy); color: #fff; border-radius: 999px; padding: 2px 7px }
+.adm-main { max-width: 1320px; margin: 0 auto; padding: 28px }
+.adm-bar-top { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 18px }
+.adm-bar-top h1 { font: italic 800 32px/1 var(--ft); text-transform: uppercase; color: var(--navy) }
+.adm-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap }
+.adm select, .adm input, .adm textarea { font: 400 14px var(--fb); padding: 9px 11px; border: 1.5px solid var(--line); border-radius: 8px; background: #fff; color: var(--ink) }
+.adm select:focus, .adm input:focus, .adm textarea:focus { outline: none; border-color: var(--skyd) }
+.adm-btn { display: inline-flex; align-items: center; gap: 6px; border: 0; background: var(--navy); color: #fff; font: 700 13px var(--fb); padding: 10px 16px; border-radius: 8px; cursor: pointer; transition: filter .2s, transform .2s }
+.adm-btn:hover { filter: brightness(1.15) }
+.adm-btn.sm { padding: 7px 12px; font-size: 12px }
+.adm-btn.line { background: transparent; color: var(--navy); box-shadow: inset 0 0 0 1.5px var(--line) }
+.adm-top .adm-btn.line { color: #fff; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.25) }
+.adm-btn.danger { color: #B42318 }
+.adm-alert { background: #FFE9E4; color: #8A2414; padding: 12px 16px; border-radius: 8px; margin-bottom: 18px }
+.adm-muted { color: var(--muted); font-size: 13px }
+.adm-empty { background: #fff; border: 1.5px dashed var(--line); border-radius: 12px; padding: 36px; text-align: center; color: var(--muted) }
+.adm-card { background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px var(--line); padding: 20px }
+.adm-card h2 { font: italic 800 18px var(--ft); text-transform: uppercase; color: var(--navy); margin-bottom: 12px }
+.adm-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px }
+.adm-tile { all: unset; cursor: pointer; background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px var(--line); padding: 18px 20px; display: grid; gap: 4px; transition: transform .2s, box-shadow .2s }
+.adm-tile:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px var(--line), 0 10px 24px rgba(19,38,68,.08) }
+.adm-tile b { font: italic 800 42px/1 var(--ft); color: var(--navy) }
+.adm-tile span { font: 700 14px var(--fb); color: var(--navy) }
+.adm-tile small { font-size: 12px; color: var(--muted) }
+.adm-tile.alert { box-shadow: 0 0 0 1px var(--line), inset 4px 0 0 var(--cor) }
+.adm-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px }
+.adm-line { display: flex; gap: 10px; align-items: baseline; padding: 8px 0; border-top: 1px solid var(--line); font-size: 14px }
+.adm-line em { margin-left: auto; font-style: normal; font-size: 12px; color: var(--muted) }
+.adm-date { font: 700 11px var(--fb); letter-spacing: .06em; text-transform: uppercase; color: var(--skyd); white-space: nowrap }
+.adm-date.late, .late { color: #B42318 !important }
+.adm-bar { display: grid; grid-template-columns: 120px 1fr 28px; align-items: center; gap: 10px; font-size: 13px; padding: 5px 0 }
+.adm-bar i { height: 10px; background: var(--sky); border-radius: 4px; min-width: 2px }
+.adm-bar b { text-align: right; color: var(--navy) }
+.adm-kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; align-items: start }
+.adm-col { background: #E8EDF2; border-radius: 12px; padding: 12px; min-height: 200px; transition: background .2s }
+.adm-col.drop { background: #DCE8F2 }
+.adm-col h2 { font: 700 12px var(--fb); letter-spacing: .14em; text-transform: uppercase; color: var(--navy); padding: 4px 4px 10px; display: flex; justify-content: space-between }
+.adm-col h2 span { color: var(--muted) }
+.adm-task { background: #fff; border-radius: 10px; padding: 12px; margin-bottom: 8px; box-shadow: 0 1px 0 rgba(19,38,68,.08); cursor: pointer; transition: box-shadow .2s, transform .2s }
+.adm-task:hover { box-shadow: 0 0 0 2px var(--sky) }
+.adm-task p { font-size: 14px; line-height: 1.4; font-weight: 600; color: var(--navy) }
+.adm-task.done p { text-decoration: line-through; color: var(--muted) }
+.adm-task > div { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap }
+.adm-chip { font: 600 11px var(--fb); background: var(--light); color: var(--navy); padding: 3px 8px; border-radius: 999px }
+.adm-move { margin-left: auto; display: flex; gap: 4px }
+.adm-move button { border: 0; background: var(--light); color: var(--navy); width: 26px; height: 26px; border-radius: 6px; cursor: pointer; font-weight: 700 }
+.adm-move button:hover { background: var(--sky) }
+.adm-quick input { width: 100%; background: transparent; border: 1.5px dashed #C5D0DB }
+.adm-quick input:focus { background: #fff; border-style: solid }
+.adm-steps { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px }
+.adm-steps button { border: 0; background: #fff; box-shadow: 0 0 0 1px var(--line); color: var(--navy); font: 600 13px var(--fb); padding: 8px 12px; border-radius: 999px; cursor: pointer; display: flex; gap: 6px; align-items: center }
+.adm-steps button.on { background: var(--navy); color: #fff }
+.adm-steps button.on i { background: var(--sky); color: var(--navy) }
+.adm-total { font-size: 13px; color: var(--muted) }
+.adm-total b { font: italic 800 20px var(--ft); color: var(--navy) }
+.adm-table-wrap { background: #fff; border-radius: 12px; box-shadow: 0 0 0 1px var(--line); overflow-x: auto }
+.adm-table { width: 100%; border-collapse: collapse; font-size: 14px }
+.adm-table th { text-align: left; font: 700 11px var(--fb); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); padding: 12px 14px; border-bottom: 1px solid var(--line) }
+.adm-table td { padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top }
+.adm-table td small { display: block; font-size: 12px; color: var(--muted); margin-top: 2px }
+.adm-table tbody tr { cursor: pointer }
+.adm-table tbody tr:hover { background: #F7F9FB }
+.adm-stage { font-weight: 700 !important; font-size: 12px !important; padding: 6px 8px !important; border-radius: 999px !important; border: 0 !important }
+.s-a_contacter { background: #EEF1F4 } .s-contacte { background: #E3F0F8 } .s-interesse { background: #D3ECF8 }
+.s-signe { background: #68CEF6 } .s-paye { background: #132644; color: #fff !important } .s-logo_recu { background: #1F6F94; color: #fff !important } .s-refuse { background: #FFE9E4 }
+.adm-subs { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px }
+.adm-sub header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px }
+.adm-sub time { font-size: 12px; color: var(--muted) }
+.adm-type { font: 700 11px var(--fb); letter-spacing: .12em; text-transform: uppercase; padding: 5px 9px; border-radius: 4px; background: var(--light); color: var(--navy) }
+.adm-type.t-commandite { background: var(--sky) } .adm-type.t-precommande { background: var(--navy); color: #fff }
+.adm-sub dl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; font-size: 14px }
+.adm-sub dl .wide { grid-column: 1 / -1 }
+.adm-sub dt { font: 700 10px var(--fb); letter-spacing: .12em; text-transform: uppercase; color: var(--muted) }
+.adm-sub dd { margin-top: 2px; white-space: pre-wrap; word-break: break-word }
+.adm-sub dd a { color: var(--skyd); font-weight: 600 }
+.adm-sub-foot { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--line) }
+.adm-drawer-bg { position: fixed; inset: 0; background: rgba(14, 29, 53, .45); z-index: 50; display: flex; justify-content: flex-end; animation: admfade .2s }
+.adm-drawer { width: min(520px, 100%); height: 100%; background: #fff; overflow-y: auto; padding: 24px; animation: admslide .25s cubic-bezier(.2,.7,.2,1) }
+.adm-drawer header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px }
+.adm-drawer h2 { font: italic 800 24px var(--ft); text-transform: uppercase; color: var(--navy) }
+.adm-x { border: 0; background: var(--light); width: 36px; height: 36px; border-radius: 50%; font-size: 22px; cursor: pointer; color: var(--navy) }
+@keyframes admfade { from { opacity: 0 } } @keyframes admslide { from { transform: translateX(40px); opacity: 0 } }
+.adm-form { display: grid; gap: 14px }
+.adm-form label { display: grid; gap: 6px; font: 600 13px var(--fb); color: var(--navy) }
+.adm-form textarea { resize: vertical }
+.adm-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px }
+.adm-form-actions { display: flex; justify-content: space-between; gap: 10px; margin-top: 6px }
+.adm-form-actions .adm-btn:last-child { margin-left: auto }
+.adm-link { font-size: 13px; color: var(--skyd); font-weight: 600 }
+@media (max-width: 900px) {
+  .adm-tiles { grid-template-columns: 1fr 1fr } .adm-grid2, .adm-kanban, .adm-subs { grid-template-columns: 1fr }
+  .adm-main { padding: 18px 14px } .adm-top { padding: 10px 14px } .adm-email { display: none } .adm-row, .adm-sub dl { grid-template-columns: 1fr }
+}

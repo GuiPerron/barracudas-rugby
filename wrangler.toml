@@ -8,5 +8,14 @@ compatibility_date = "2026-09-01"
 #   TURNSTILE_SECRET    clé secrète Cloudflare Turnstile (anti-pourriel)
 [vars]
 FORM_TO_INFO = "info@barracudasrugby.com"
-FORM_TO_COMMANDITES = "info@barracudasrugby.com"
+FORM_TO_COMMANDITES = "commandites@barracudasrugby.com"
 FORM_FROM = "Site Barracudas <site@barracudasrugby.com>"
+# Admin (/admin) : membres autorisés + équipe Cloudflare Access
+ADMIN_EMAILS = "guillaume.perron@barracudasrugby.com,info@barracudasrugby.com,commandites@barracudasrugby.com,technique@barracudasrugby.com,tresorier@barracudasrugby.com,secretaire@barracudasrugby.com"
+ACCESS_TEAM_DOMAIN = "https://alfred-api.cloudflareaccess.com"
+
+# Base de données de l'admin (Cloudflare D1)
+[[d1_databases]]
+binding = "DB"
+database_name = "barracudas-admin"
+database_id = "71978ff4-341c-4310-a728-5a2c75be90ca"
