@@ -22,7 +22,11 @@ export default function Boutique() {
           <div className="w" style={{ display: "block" }}>
             <SectionTitle>Merci à nos partenaires</SectionTitle>
             <p className="prose" style={{ marginTop: 14 }}>Ils sont au dos du t-shirt édition 2026, et à nos côtés toute la saison.</p>
-            <ul className="partners-list">{a.partenaires.map((p) => <li key={p} className="rv">{p}</li>)}</ul>
+            <ul className="partners-list">{a.partenaires.map((p) => (
+              <li key={p.nom} className="rv">{p.url
+                ? <a href={p.url} target="_blank" rel="noopener sponsored">{p.nom}<span aria-hidden="true">↗</span></a>
+                : <span>{p.nom}</span>}</li>
+            ))}</ul>
           </div>
         </section>
       )}

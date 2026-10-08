@@ -401,7 +401,12 @@ a, button, .story, .tile, .ncard, .feat, .brief, .tierc { cursor: pointer }
 .prod-assur { list-style: none; display: grid; gap: 6px; font-size: 13px; color: var(--muted) }
 .prod-assur li:before { content: "✓"; color: var(--skyd); font-weight: 700; margin-right: 8px }
 .partners-list { list-style: none; display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 26px }
-.partners-list li { background: #fff; border-radius: 10px; box-shadow: 0 0 0 1px var(--line); padding: 18px 16px; font: italic 800 17px/1.15 var(--ft); text-transform: uppercase; color: var(--navy); text-align: center; display: grid; place-items: center; min-height: 72px }
+.partners-list li { display: grid }
+.partners-list li > a, .partners-list li > span { background: #fff; border-radius: 10px; box-shadow: 0 0 0 1px var(--line); padding: 18px 16px; font: italic 800 17px/1.15 var(--ft); text-transform: uppercase; color: var(--navy); text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 72px }
+.partners-list li > a { transition: transform .25s, box-shadow .25s, background .25s, color .25s }
+.partners-list li > a span { font-style: normal; font-size: 14px; color: var(--skyd); transition: transform .25s }
+.partners-list li > a:hover { transform: translateY(-4px); background: var(--navy); color: #fff; box-shadow: 0 12px 28px rgba(19, 38, 68, .18) }
+.partners-list li > a:hover span { color: var(--sky); transform: translate(2px, -2px) }
 .shop-prod { position: relative; background: var(--light); border-radius: 12px; min-height: 400px; display: grid; place-items: center; overflow: hidden }
 .shop-prod img { width: 78%; mix-blend-mode: multiply; transition: transform .9s cubic-bezier(.2, .7, .2, 1) }
 .shop-prod:hover img { transform: scale(1.05) rotate(-1deg) }

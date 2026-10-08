@@ -13,7 +13,7 @@ export type Article = {
   coupes: { nom: string; tailles: { t: string; stock: number | null }[] }[];
   images: { src: string; alt: string; label: string }[];
   points: string[];
-  partenaires?: string[];
+  partenaires?: { nom: string; url?: string }[];
 };
 
 export const ARTICLES: Article[] = [
@@ -39,9 +39,16 @@ export const ARTICLES: Article[] = [
       "Marine chiné, imprimé ciel au devant",
       "Au dos : logo du club et nos partenaires officiels",
     ],
+    // Sites vérifiés et confirmés le 8 oct. 2026. Sans url : site inconnu.
     partenaires: [
-      "Pascal Dupuis Avocat", "Conception Boréale", "Actiforme Kin + Physio", "Glen Morgan’s Irish Pub",
-      "Blackbox St-Jean", "Actisport", "Unibroue", "TBC Fabrication",
+      { nom: "Pascal Dupuis Avocat" },
+      { nom: "Conception Boréale", url: "https://conceptionboreale.com" },
+      { nom: "Actiforme Kin + Physio", url: "https://actiforme.com" },
+      { nom: "Glen Morgan’s Irish Pub", url: "https://pubglenmorgan.com" },
+      { nom: "Blackbox St-Jean", url: "https://blackboxstjean.com" },
+      { nom: "Actisport", url: "https://actisport.ca" },
+      { nom: "Unibroue", url: "https://www.unibroue.com" },
+      { nom: "TBC Fabrication", url: "https://www.tbcfabrication.com" },
     ],
   },
 ];
