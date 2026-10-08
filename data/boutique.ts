@@ -9,6 +9,9 @@ export type Article = {
   campagne?: string;
   accroche?: string;
   prix: number;
+  // Inventaire en direct : Google Sheet publié (CSV « cle,stock », ex. T_2026_homme_XL,2). Le stock ci-dessous sert de repli.
+  stockCsv?: string;
+  stockPrefixe?: string;
   // Coupes et tailles : à remplacer par l'inventaire fourni par le club (stock = null → non suivi)
   coupes: { nom: string; tailles: { t: string; stock: number | null }[] }[];
   images: { src: string; alt: string; label: string }[];
@@ -25,6 +28,8 @@ export const ARTICLES: Article[] = [
     campagne: "Campagne de financement 2026",
     accroche: "Portez fièrement les couleurs de votre équipe de rugby !",
     prix: 25,
+    stockCsv: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyW52TNHkjxOzpxP601Wvtnqk9EPXt85Hg5f09Hpu_r-lR_2OkVcM0Qek5FfSE_rBpoLLx9Ofg6mk1/pub?gid=0&single=true&output=csv",
+    stockPrefixe: "T_2026",
     // Inventaire fourni par le club (8 oct. 2026). Mettre à jour après chaque réservation confirmée ; 0 = épuisé.
     coupes: [
       { nom: "Homme", tailles: [{ t: "XL", stock: 2 }, { t: "2XL", stock: 3 }, { t: "3XL", stock: 2 }] },

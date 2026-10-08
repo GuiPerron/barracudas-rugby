@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Article } from "@/data/boutique";
 import { RESERVATION } from "@/data/boutique";
 import { ouvrirCourriel } from "@/lib/mailto";
@@ -7,9 +7,27 @@ import { ouvrirCourriel } from "@/lib/mailto";
 /** Fiche produit : galerie devant/dos + réservation (taille, quantité, coordonnées). Envoi vers /api/formulaire. */
 export default function Produit({ a }: { a: Article }) {
   const [img, setImg] = useState(0);
+  const [coupes, setCoupes] = useState(a.coupes);
   const [coupe, setCoupe] = useState(0);
   const [taille, setTaille] = useState("");
-  const c = a.coupes[coupe];
+  const c = coupes[coupe];
+
+  // Stock en direct depuis le Google Sheet du club (repli : valeurs de data/boutique.ts)
+  useEffect(() => {
+    if (!a.stockCsv) return;
+    fetch(a.stockCsv, { cache: "no-store" }).then((r) => r.ok ? r.text() : Promise.reject()).then((csv) => {
+      const lu: Record<string, { t: string; stock: number }[]> = {};
+      csv.split(/\r?\n/).forEach((ligne) => {
+        const [cle, val] = ligne.split(",").map((x) => x.trim());
+        const m = cle?.match(new RegExp(`^${a.stockPrefixe}_([^_]+)_(.+)$`, "i"));
+        const n = Number(val);
+        if (!m || !Number.isFinite(n)) return;
+        (lu[m[1].toLowerCase()] ??= []).push({ t: m[2].toUpperCase(), stock: Math.max(0, Math.floor(n)) });
+      });
+      const maj = a.coupes.map((x) => lu[x.nom.toLowerCase()] ? { ...x, tailles: lu[x.nom.toLowerCase()] } : x);
+      if (Object.keys(lu).length) setCoupes(maj);
+    }).catch(() => {});
+  }, [a]);
   const stock = c.tailles.find((y) => y.t === taille)?.stock ?? null;
   const max = stock ?? 10;
   const [qte, setQte] = useState(1);
@@ -73,7 +91,7 @@ export default function Produit({ a }: { a: Article }) {
             <fieldset className="prod-sizes">
               <legend>Coupe *</legend>
               <div className="prod-seg">
-                {a.coupes.map((x, k) => (
+                {coupes.map((x, k) => (
                   <button type="button" key={x.nom} className={k === coupe ? "on" : ""} aria-pressed={k === coupe}
                     onClick={() => { setCoupe(k); setTaille(""); setQte(1); }}>{x.nom}</button>
                 ))}
