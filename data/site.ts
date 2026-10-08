@@ -11,7 +11,7 @@ export const NAV = [
 export const LIENS = {
   facebook: "https://www.facebook.com/barracudasrugby/",
   instagram: "https://www.instagram.com/barracudasrugbystjean/",
-  espaceJoueurs: "https://www.playhq.com/ca", // TODO : phase 2 (portail joueurs) ; PlayHQ en attendant
+  espaceJoueurs: "/admin/", // admin du CA pour l'instant ; espace joueurs complet en phase 2
   playhq: "https://www.playhq.com/ca/rugby-canada/org/club-de-rugby-les-barracudas-de-st-jean/b74d122f/rugby-quebec-provincial-competition-2026/teams/barracudas/f249bcaa", // fiche de l'équipe 2026 (matchs)
   inscription: "https://www.playhq.com/ca/rugby-canada/register/394ee3", // inscription au club (saison 2026-2027)
 };
