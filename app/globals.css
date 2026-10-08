@@ -371,6 +371,13 @@ a, button, .story, .tile, .ncard, .feat, .brief, .tierc { cursor: pointer }
 .prod-info .k { color: var(--skyd) }
 .prod-info h2 { font-size: 52px; line-height: .98; color: var(--navy); margin-top: 10px; letter-spacing: .02em }
 .prod-sub { font-size: 16px; color: var(--muted); margin-top: 8px }
+.prod-accroche { font-size: 16px; line-height: 1.55; color: #2b3644; margin-top: 14px; max-width: 480px }
+.prod-seg { display: inline-flex !important; gap: 0 !important; background: var(--light); border-radius: 999px; padding: 4px }
+.prod-seg button { height: 40px !important; border: 0 !important; border-radius: 999px !important; background: transparent !important; color: var(--navy) !important; padding: 0 20px !important }
+.prod-seg button.on { background: var(--navy) !important; color: #fff !important }
+.prod-sizes button.out { opacity: .35; text-decoration: line-through; cursor: not-allowed; transform: none }
+.prod-stock { font: 600 13px var(--fb); color: #C23A20; margin-top: -4px }
+.stepper button:disabled { opacity: .3; cursor: not-allowed }
 .prod-prix { font-size: 44px; color: var(--navy); margin-top: 18px }
 .prod-points { list-style: none; margin: 18px 0 26px; display: grid; gap: 8px; padding-bottom: 24px; border-bottom: 1px solid var(--line) }
 .prod-points li { display: grid; grid-template-columns: 18px 1fr; gap: 8px; font-size: 15px; line-height: 1.5; color: #2b3644 }

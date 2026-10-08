@@ -4,7 +4,7 @@ import Produit from "@/components/Produit";
 import { SectionTitle } from "@/components/ui";
 import { ARTICLES } from "@/data/boutique";
 
-export const metadata: Metadata = { title: "Boutique", description: "T-shirt supporteur officiel des Barracudas, 25 $. Réservation en ligne, paiement et cueillette à l’entraînement." };
+export const metadata: Metadata = { title: "Boutique", description: "T-shirt supporteur officiel des Barracudas, 25 $ : coupes homme, femme et enfant. Réservation en ligne, paiement et cueillette à l’entraînement." };
 
 export default function Boutique() {
   const a = ARTICLES[0];
