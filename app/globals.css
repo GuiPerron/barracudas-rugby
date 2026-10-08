@@ -523,3 +523,17 @@ a, button, .story, .tile, .ncard, .feat, .brief, .tierc { cursor: pointer }
   .adm-tiles { grid-template-columns: 1fr 1fr } .adm-grid2, .adm-kanban, .adm-subs { grid-template-columns: 1fr }
   .adm-main { padding: 18px 14px } .adm-top { padding: 10px 14px } .adm-email { display: none } .adm-row, .adm-sub dl { grid-template-columns: 1fr }
 }
+.adm-bulle { display: inline-flex; align-items: center; gap: 3px; font: 700 11px var(--fb); color: var(--skyd); background: #E3F0F8; padding: 2px 7px; border-radius: 999px; vertical-align: middle }
+.adm-fil { margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--line) }
+.adm-fil h3 { font: 700 12px var(--fb); letter-spacing: .14em; text-transform: uppercase; color: var(--navy); margin-bottom: 12px; display: flex; gap: 8px; align-items: center }
+.adm-fil h3 span { background: var(--navy); color: #fff; border-radius: 999px; padding: 1px 7px; font-size: 11px; letter-spacing: 0 }
+.adm-fil ol { list-style: none; display: grid; gap: 14px; margin-bottom: 14px }
+.adm-fil li { display: grid; grid-template-columns: 32px 1fr; gap: 10px }
+.adm-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--navy); color: var(--sky); display: grid; place-items: center; font: italic 800 15px var(--ft) }
+.adm-fil li.moi .adm-avatar { background: var(--sky); color: var(--navy) }
+.adm-meta { font-size: 12px; color: var(--muted) } .adm-meta b { color: var(--navy) }
+.adm-meta button { border: 0; background: none; color: var(--muted); font-size: 11px; margin-left: 8px; cursor: pointer; text-decoration: underline }
+.adm-txt { font-size: 14px; line-height: 1.5; white-space: pre-wrap; margin-top: 3px; background: var(--light); padding: 9px 12px; border-radius: 0 10px 10px 10px }
+.adm-fil-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end }
+.adm-fil-form textarea { resize: vertical; min-height: 44px }
+.adm-btn:disabled { opacity: .45; cursor: default }

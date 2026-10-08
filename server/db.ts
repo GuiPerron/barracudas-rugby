@@ -25,6 +25,11 @@ const SCHEMA = [
      id INTEGER PRIMARY KEY AUTOINCREMENT,
      type TEXT NOT NULL, donnees TEXT NOT NULL, statut TEXT NOT NULL DEFAULT 'nouveau', note TEXT,
      recu_le TEXT NOT NULL DEFAULT (datetime('now')), maj_le TEXT NOT NULL DEFAULT (datetime('now')))`,
+  `CREATE TABLE IF NOT EXISTS commentaires (
+     id INTEGER PRIMARY KEY AUTOINCREMENT,
+     objet TEXT NOT NULL, objet_id INTEGER NOT NULL, auteur TEXT NOT NULL, texte TEXT NOT NULL,
+     cree_le TEXT NOT NULL DEFAULT (datetime('now')))`,
+  `CREATE INDEX IF NOT EXISTS idx_commentaires_objet ON commentaires (objet, objet_id)`,
   `CREATE TABLE IF NOT EXISTS journal (
      id INTEGER PRIMARY KEY AUTOINCREMENT, quand TEXT NOT NULL DEFAULT (datetime('now')),
      qui TEXT, action TEXT, objet TEXT, objet_id INTEGER)`,

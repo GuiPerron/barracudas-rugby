@@ -8,6 +8,10 @@ type Tache = { id: number; titre: string; details?: string; responsable?: string
 type Commandite = { id: number; entreprise: string; contact?: string; courriel?: string; telephone?: string; site?: string; forfait?: string; entente?: string; montant?: number; statut: string; responsable?: string; prochaine_action?: string; prochaine_date?: string; notes?: string; maj_le: string };
 type Soumission = { id: number; type: string; donnees: string; statut: string; note?: string; recu_le: string };
 
+const NOMS: Record<string, string> = { "guillaume.perron": "Guillaume", info: "Jean", commandites: "Clément", technique: "Christophe", tresorier: "Marc-André", secretaire: "Gabriel" };
+const nom = (email: string) => NOMS[email.split("@")[0]] ?? email.split("@")[0];
+type Commentaire = { id: number; objet: string; objet_id: number; auteur: string; texte: string; cree_le: string };
+type Comptes = Record<string, number>;
 const RESPONSABLES = ["Jean", "Clément", "Christophe", "Marc-André", "Gabriel", "Guillaume"];
 const COL_TACHES = [
   { k: "a_faire", label: "À faire" },
@@ -49,16 +53,19 @@ export default function Admin() {
   const [comm, setComm] = useState<Commandite[]>([]);
   const [soum, setSoum] = useState<Soumission[]>([]);
   const [charge, setCharge] = useState(false);
+  const [comptes, setComptes] = useState<Comptes>({});
 
   const recharger = useCallback(async () => {
     try {
-      const [m, t, c, s] = await Promise.all([
+      const [m, t, c, s, k] = await Promise.all([
         api<{ email: string }>("/api/admin/moi"),
         api<{ items: Tache[] }>("/api/admin/taches"),
         api<{ items: Commandite[] }>("/api/admin/commandites"),
         api<{ items: Soumission[] }>("/api/admin/soumissions"),
+        api<{ comptes: { objet: string; objet_id: number; n: number }[] }>("/api/admin/commentaires"),
       ]);
       setEmail(m.email); setTaches(t.items); setComm(c.items); setSoum(s.items); setErreur("");
+      setComptes(Object.fromEntries(k.comptes.map((x) => [`${x.objet}:${x.objet_id}`, x.n])));
     } catch (e) { setErreur((e as Error).message); }
     setCharge(true);
   }, []);
@@ -93,8 +100,8 @@ export default function Admin() {
         {!charge ? <p className="adm-muted">Chargement…</p> : (
           <>
             {onglet === "accueil" && <Accueil taches={taches} comm={comm} soum={soum} aller={aller} />}
-            {onglet === "taches" && <Taches items={taches} setItems={setTaches} />}
-            {onglet === "commandites" && <Commandites items={comm} setItems={setComm} />}
+            {onglet === "taches" && <Taches items={taches} setItems={setTaches} email={email} comptes={comptes} setComptes={setComptes} />}
+            {onglet === "commandites" && <Commandites items={comm} setItems={setComm} email={email} comptes={comptes} setComptes={setComptes} />}
             {onglet === "formulaires" && <Formulaires items={soum} setItems={setSoum} creerCommandite={async (d) => {
               const r = await api<{ item: Commandite }>("/api/admin/commandites", { method: "POST", body: JSON.stringify({ entreprise: d.entreprise || d.nom || "Sans nom", contact: d.nom, courriel: d.courriel, telephone: d.telephone, forfait: d.forfait, entente: d.entente, notes: d.message, statut: "interesse" }) });
               setComm((x) => [r.item, ...x]); aller("commandites");
@@ -151,7 +158,8 @@ function Accueil({ taches, comm, soum, aller }: { taches: Tache[]; comm: Command
 }
 
 /* ---------------- Tâches (tableau kanban) ---------------- */
-function Taches({ items, setItems }: { items: Tache[]; setItems: React.Dispatch<React.SetStateAction<Tache[]>> }) {
+type FilProps = { email: string; comptes: Comptes; setComptes: React.Dispatch<React.SetStateAction<Comptes>> };
+function Taches({ items, setItems, email, comptes, setComptes }: { items: Tache[]; setItems: React.Dispatch<React.SetStateAction<Tache[]>> } & FilProps) {
   const [edit, setEdit] = useState<Partial<Tache> | null>(null);
   const [glisse, setGlisse] = useState<number | null>(null);
   const [filtre, setFiltre] = useState("");
@@ -202,6 +210,7 @@ function Taches({ items, setItems }: { items: Tache[]; setItems: React.Dispatch<
                 <div>
                   {x.responsable && <span className="adm-chip">{x.responsable}</span>}
                   {x.echeance && <span className={"adm-date" + (x.statut !== "fait" && x.echeance < t ? " late" : "")}>{dateFr(x.echeance)}</span>}
+                  <Bulle n={comptes[`taches:${x.id}`]} />
                   <span className="adm-move" onClick={(e) => e.stopPropagation()}>
                     {col.k !== "a_faire" && <button aria-label="Reculer" onClick={() => maj(x.id, { statut: COL_TACHES[COL_TACHES.findIndex((c) => c.k === col.k) - 1].k })}>←</button>}
                     {col.k !== "fait" && <button aria-label="Avancer" onClick={() => maj(x.id, { statut: COL_TACHES[COL_TACHES.findIndex((c) => c.k === col.k) + 1].k })}>→</button>}
@@ -216,6 +225,7 @@ function Taches({ items, setItems }: { items: Tache[]; setItems: React.Dispatch<
       {edit && (
         <Tiroir titre={edit.id ? "Modifier la tâche" : "Nouvelle tâche"} fermer={() => setEdit(null)}>
           <FormTache init={edit} onSave={enregistrer} onDelete={edit.id ? () => supprimer(edit.id!) : undefined} />
+          {edit.id && <Fil objet="taches" id={edit.id} email={email} setComptes={setComptes} />}
         </Tiroir>
       )}
     </>
@@ -253,7 +263,7 @@ function FormTache({ init, onSave, onDelete }: { init: Partial<Tache>; onSave: (
 }
 
 /* ---------------- Commanditaires ---------------- */
-function Commandites({ items, setItems }: { items: Commandite[]; setItems: React.Dispatch<React.SetStateAction<Commandite[]>> }) {
+function Commandites({ items, setItems, email, comptes, setComptes }: { items: Commandite[]; setItems: React.Dispatch<React.SetStateAction<Commandite[]>> } & FilProps) {
   const [edit, setEdit] = useState<Partial<Commandite> | null>(null);
   const [etape, setEtape] = useState("");
   const t = today();
@@ -302,7 +312,7 @@ function Commandites({ items, setItems }: { items: Commandite[]; setItems: React
             <tbody>
               {liste.map((c) => (
                 <tr key={c.id} onClick={() => setEdit(c)}>
-                  <td><b>{c.entreprise}</b>{c.contact && <small>{c.contact}</small>}</td>
+                  <td><b>{c.entreprise}</b> <Bulle n={comptes[`commandites:${c.id}`]} />{c.contact && <small>{c.contact}</small>}</td>
                   <td onClick={(e) => e.stopPropagation()}>
                     <select className={"adm-stage s-" + c.statut} value={c.statut} onChange={(e) => statut(c, e.target.value)}>{ETAPES.map((e) => <option key={e.k} value={e.k}>{e.label}</option>)}</select>
                   </td>
@@ -319,6 +329,7 @@ function Commandites({ items, setItems }: { items: Commandite[]; setItems: React
       {edit && (
         <Tiroir titre={edit.id ? edit.entreprise ?? "Commanditaire" : "Nouveau commanditaire"} fermer={() => setEdit(null)}>
           <FormCommandite init={edit} onSave={enregistrer} onDelete={edit.id ? () => supprimer(edit.id!) : undefined} />
+          {edit.id && <Fil objet="commandites" id={edit.id} email={email} setComptes={setComptes} />}
         </Tiroir>
       )}
     </>
@@ -406,6 +417,76 @@ function Formulaires({ items, setItems, creerCommandite }: { items: Soumission[]
       )}
     </>
   );
+}
+
+/* ---------------- Commentaires ---------------- */
+function Bulle({ n }: { n?: number }) {
+  if (!n) return null;
+  return (
+    <span className="adm-bulle" title={`${n} commentaire${n > 1 ? "s" : ""}`}>
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z" /></svg>{n}
+    </span>
+  );
+}
+
+function Fil({ objet, id, email, setComptes }: { objet: "taches" | "commandites"; id: number; email: string; setComptes: React.Dispatch<React.SetStateAction<Comptes>> }) {
+  const [items, setItems] = useState<Commentaire[] | null>(null);
+  const [texte, setTexte] = useState("");
+  const [envoi, setEnvoi] = useState(false);
+  useEffect(() => {
+    api<{ items: Commentaire[] }>(`/api/admin/commentaires?objet=${objet}&id=${id}`).then((r) => setItems(r.items)).catch(() => setItems([]));
+  }, [objet, id]);
+  const cle = `${objet}:${id}`;
+  async function envoyer(e: React.FormEvent) {
+    e.preventDefault();
+    if (!texte.trim()) return;
+    setEnvoi(true);
+    try {
+      const r = await api<{ item: Commentaire }>("/api/admin/commentaires", { method: "POST", body: JSON.stringify({ objet, objet_id: id, texte }) });
+      setItems((x) => [...(x ?? []), r.item]); setTexte("");
+      setComptes((c) => ({ ...c, [cle]: (c[cle] ?? 0) + 1 }));
+    } catch (er) { alert((er as Error).message); }
+    setEnvoi(false);
+  }
+  async function supprimer(c: Commentaire) {
+    if (!confirm("Supprimer ce commentaire ?")) return;
+    await api(`/api/admin/commentaires/${c.id}`, { method: "DELETE" });
+    setItems((x) => (x ?? []).filter((y) => y.id !== c.id));
+    setComptes((k) => ({ ...k, [cle]: Math.max(0, (k[cle] ?? 1) - 1) }));
+  }
+  return (
+    <section className="adm-fil">
+      <h3>Commentaires {items && items.length > 0 && <span>{items.length}</span>}</h3>
+      {items === null ? <p className="adm-muted">Chargement…</p> : items.length === 0 ? <p className="adm-muted">Aucun commentaire pour l’instant.</p> : (
+        <ol>
+          {items.map((c) => (
+            <li key={c.id} className={c.auteur === email ? "moi" : ""}>
+              <div className="adm-avatar" aria-hidden="true">{nom(c.auteur).slice(0, 1)}</div>
+              <div>
+                <p className="adm-meta"><b>{nom(c.auteur)}</b> · {quand(c.cree_le)}
+                  {c.auteur === email && <button onClick={() => supprimer(c)} aria-label="Supprimer">Supprimer</button>}</p>
+                <p className="adm-txt">{c.texte}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
+      <form onSubmit={envoyer} className="adm-fil-form">
+        <textarea value={texte} onChange={(e) => setTexte(e.target.value)} rows={2} placeholder="Écrire un commentaire…"
+          onKeyDown={(e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) envoyer(e); }} />
+        <button className="adm-btn sm" disabled={envoi || !texte.trim()}>{envoi ? "…" : "Envoyer"}</button>
+      </form>
+    </section>
+  );
+}
+
+function quand(iso: string) {
+  const d = new Date(iso.replace(" ", "T") + "Z");
+  const min = Math.round((Date.now() - d.getTime()) / 60000);
+  if (min < 1) return "à l’instant";
+  if (min < 60) return `il y a ${min} min`;
+  if (min < 60 * 24) return `il y a ${Math.round(min / 60)} h`;
+  return d.toLocaleDateString("fr-CA", { day: "numeric", month: "short" }) + " " + d.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
 }
 
 /* ---------------- Tiroir (panneau latéral) ---------------- */
