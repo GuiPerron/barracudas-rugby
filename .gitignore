@@ -1,0 +1,10 @@
+node_modules/
+.next/
+out/
+.wrangler/
+.env*
+.DS_Store
+photos-src/*.jpg
+next-env.d.ts
+*.tsbuildinfo
+_import/

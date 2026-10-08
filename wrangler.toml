@@ -1,0 +1,12 @@
+# Cloudflare Pages : build = "npm run build", dossier de sortie = "out"
+name = "barracudas-rugby"
+pages_build_output_dir = "out"
+compatibility_date = "2026-09-01"
+
+# Variables secrètes à définir dans le tableau de bord Cloudflare (Settings > Variables) :
+#   RESEND_API_KEY      clé d'envoi de courriel (formulaires)
+#   TURNSTILE_SECRET    clé secrète Cloudflare Turnstile (anti-pourriel)
+[vars]
+FORM_TO_INFO = "info@barracudasrugby.com"
+FORM_TO_COMMANDITES = "info@barracudasrugby.com"
+FORM_FROM = "Site Barracudas <site@barracudasrugby.com>"
