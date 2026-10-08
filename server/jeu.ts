@@ -26,6 +26,7 @@ const SCHEMA = [
 const EDITEURS_INITIAUX: [string, string][] = [
   ["technique@barracudasrugby.com", "Christophe Morin"],
   ["guillaume.perron@barracudasrugby.com", "Guillaume Perron"],
+  ["info@barracudasrugby.com", "Jean Forget"],
 ];
 
 let pret = false;
@@ -54,6 +55,13 @@ async function migrer(d: D1Database) {
   if (!cols.includes("postes")) {
     await d.prepare("ALTER TABLE jeu_membres ADD COLUMN postes TEXT NOT NULL DEFAULT '[]'").run();
     if (cols.includes("poste")) await d.prepare("UPDATE jeu_membres SET postes = '[' || poste || ']'").run();
+  }
+  // 1b. Ajouts ponctuels (une seule fois, notés dans jeu_migrations pour ne pas annuler un retrait fait ensuite).
+  await d.prepare("CREATE TABLE IF NOT EXISTS jeu_migrations (nom TEXT PRIMARY KEY, le TEXT NOT NULL DEFAULT (datetime('now')))").run();
+  const faite = await d.prepare("INSERT OR IGNORE INTO jeu_migrations (nom) VALUES ('editeur-info')").run();
+  if (faite.meta.changes) {
+    await d.prepare(`INSERT INTO jeu_membres (email, nom, role, postes, ajoute_par) VALUES ('info@barracudasrugby.com', 'Jean Forget', 'editeur', '[]', 'migration')
+                     ON CONFLICT(email) DO UPDATE SET role='editeur'`).run();
   }
   // 2. Système de jeu : l'ancienne liste de principes en texte devient une structure 1-4-4-1.
   const sys = await d.prepare("SELECT donnees FROM jeu_systeme WHERE id=1").first<{ donnees: string }>();
