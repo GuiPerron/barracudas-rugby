@@ -36,7 +36,7 @@ export default function Calendrier() {
                         <span className="t" style={{ fontSize: 22, margin: "0 6px" }}>{m.scoreDom}-{m.scoreExt}</span>
                         <span className="t" style={{ fontSize: 18 }}>{nom(m.ext)}</span><Crest code={m.ext} size={34} />
                       </div>
-                      {m.lieu && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{m.lieu}</p>}
+                      {(m.lieu || m.forfait) && <p style={{ fontSize: 12, color: "var(--muted)", marginTop: 6 }}>{[m.forfait && "Forfait", m.lieu].filter(Boolean).join(" · ")}</p>}
                     </div>
                     <span className={"badge " + r}>{r === "V" ? "Victoire" : "Défaite"}</span>
                   </div>

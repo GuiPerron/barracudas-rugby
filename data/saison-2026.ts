@@ -1,4 +1,4 @@
-// Saison 2026 · Poule P3 A · source : PlayHQ (Rugby Québec), relevé en octobre 2026.
+// Saison 2026 · Poule P3 A · source : PlayHQ (Rugby Québec), relevé le 8 octobre 2026 (équipe P2-P3 Masculin, 10 matchs + demi-finale).
 // Ne rien ajouter ici qui ne vient pas de PlayHQ.
 
 export type Club = { code: string; nom: string; ecusson?: string };
@@ -10,6 +10,8 @@ export const CLUBS: Record<string, Club> = {
   ARM: { code: "ARM", nom: "Armada", ecusson: "/crests/ARM.webp" },
   BRB: { code: "BRB", nom: "Barbs", ecusson: "/crests/BAR.webp" },
   TMR: { code: "TMR", nom: "TMR", ecusson: "/crests/TMR.webp" },
+  SAB: { code: "SAB", nom: "Sainte-Anne-de-Bellevue", ecusson: "/crests/SAB.webp" },
+  ORM: { code: "ORM", nom: "Ormstown", ecusson: "/crests/ORM.webp" },
 };
 
 export type Match = {
@@ -20,17 +22,22 @@ export type Match = {
   scoreDom: number;
   scoreExt: number;
   lieu?: string;
+  forfait?: boolean; // défaite par forfait des Barracudas
 };
 
 // Du plus récent au plus ancien
 export const MATCHS: Match[] = [
   { date: "2026-08-08", phase: "Demi-finale", dom: "MTR", ext: "BAR", scoreDom: 55, scoreExt: 19, lieu: "Centre sportif Pays-d’en-Haut" },
-  { date: "2026-08-01", phase: "Saison", dom: "BAR", ext: "MTR", scoreDom: 18, scoreExt: 35 },
+  { date: "2026-08-01", phase: "Saison", dom: "BAR", ext: "MTR", scoreDom: 18, scoreExt: 35, lieu: "Terrain du Cégep de Saint-Jean" },
   { date: "2026-07-25", phase: "Saison", dom: "BRB", ext: "BAR", scoreDom: 0, scoreExt: 64, lieu: "Sunnybrook Park" },
-  { date: "2026-07-11", phase: "Saison", dom: "BAR", ext: "TMR", scoreDom: 43, scoreExt: 12 },
-  { date: "2026-07-04", phase: "Saison", dom: "BAR", ext: "NOM", scoreDom: 29, scoreExt: 22 },
-  { date: "2026-06-13", phase: "Saison", dom: "ARM", ext: "BAR", scoreDom: 0, scoreExt: 101 },
-  { date: "2026-05-30", phase: "Saison", dom: "BAR", ext: "BRB", scoreDom: 109, scoreExt: 0 },
+  { date: "2026-07-11", phase: "Saison", dom: "BAR", ext: "TMR", scoreDom: 43, scoreExt: 12, lieu: "Polyvalente Chanoine-Armand-Racicot" },
+  { date: "2026-07-04", phase: "Saison", dom: "BAR", ext: "NOM", scoreDom: 29, scoreExt: 22, lieu: "Polyvalente Chanoine-Armand-Racicot" },
+  { date: "2026-06-27", phase: "Saison", dom: "ORM", ext: "BAR", scoreDom: 34, scoreExt: 7, lieu: "Chateauguay Valley Regional High School" },
+  { date: "2026-06-13", phase: "Saison", dom: "ARM", ext: "BAR", scoreDom: 0, scoreExt: 101, lieu: "Parc Jeanne-Mance" },
+  { date: "2026-06-06", phase: "Saison", dom: "BAR", ext: "SAB", scoreDom: 29, scoreExt: 12, lieu: "Polyvalente Chanoine-Armand-Racicot" },
+  { date: "2026-05-30", phase: "Saison", dom: "BAR", ext: "BRB", scoreDom: 109, scoreExt: 0, lieu: "Polyvalente Chanoine-Armand-Racicot" },
+  { date: "2026-05-16", phase: "Saison", dom: "MTR", ext: "BAR", scoreDom: 28, scoreExt: 0, lieu: "École secondaire Curé-Mercure", forfait: true },
+  { date: "2026-05-09", phase: "Saison", dom: "NOM", ext: "BAR", scoreDom: 22, scoreExt: 12, lieu: "Parc Chênier" },
 ];
 
 export type Ligne = { rang: number; club: string; j: number; v: number; d: number; diff: number; pts: number };
