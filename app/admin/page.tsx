@@ -12,7 +12,7 @@ const NOMS: Record<string, string> = { "guillaume.perron": "Guillaume", info: "J
 const nom = (email: string) => NOMS[email.split("@")[0]] ?? email.split("@")[0];
 type Commentaire = { id: number; objet: string; objet_id: number; auteur: string; texte: string; cree_le: string };
 type Comptes = Record<string, number>;
-type Onglet = "accueil" | "taches" | "commandites" | "boutique" | "formulaires";
+type Onglet = "accueil" | "calendrier" | "taches" | "commandites" | "boutique" | "formulaires";
 const STOCK_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQyW52TNHkjxOzpxP601Wvtnqk9EPXt85Hg5f09Hpu_r-lR_2OkVcM0Qek5FfSE_rBpoLLx9Ofg6mk1/pub?gid=0&single=true&output=csv";
 const STOCK_SHEET = "https://docs.google.com/spreadsheets/d/1U47fd-tFfBcbK6MYYQfqbUMstz_kgPBsVIhjy-DfA2o/edit";
 const PRIX_TSHIRT = 25;
@@ -99,6 +99,7 @@ export default function Admin() {
       <nav className="adm-tabs" aria-label="Sections">
         {([
           ["accueil", "Mon tableau", 0],
+          ["calendrier", "Calendrier", 0],
           ["taches", "Tâches", ouvertes],
           ["commandites", "Commanditaires", 0],
           ["boutique", "Boutique", soum.filter((x) => x.type === "precommande" && x.statut === "nouveau").length],
@@ -113,6 +114,7 @@ export default function Admin() {
           <>
             {onglet === "accueil" && <Accueil taches={taches} comm={comm} soum={soum} aller={aller} email={email} />}
             {onglet === "boutique" && <Boutique items={soum} setItems={setSoum} />}
+            {onglet === "calendrier" && <Calendrier taches={taches} comm={comm} aller={aller} />}
             {onglet === "taches" && <Taches items={taches} setItems={setTaches} email={email} comptes={comptes} setComptes={setComptes} />}
             {onglet === "commandites" && <Commandites items={comm} setItems={setComm} email={email} comptes={comptes} setComptes={setComptes} />}
             {onglet === "formulaires" && <Formulaires items={soum} setItems={setSoum} creerCommandite={async (d) => {
@@ -418,6 +420,100 @@ function FormCommandite({ init, onSave, onDelete }: { init: Partial<Commandite>;
         <button className="adm-btn">Enregistrer</button>
       </div>
     </form>
+  );
+}
+
+/* ---------------- Calendrier (Google Agenda + échéances + relances) ---------------- */
+type AgendaEv = { uid: string; titre: string; debut: string; fin?: string; journee: boolean; lieu?: string; description?: string };
+type Item = { cle: string; jour: string; heure?: string; titre: string; type: "agenda" | "tache" | "relance"; detail?: string; onClick?: () => void };
+const MOIS_FR = ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
+
+function Calendrier({ taches, comm, aller }: { taches: Tache[]; comm: Commandite[]; aller: (o: Onglet) => void }) {
+  const [ag, setAg] = useState<{ items: AgendaEv[]; configure: boolean } | null>(null);
+  const [mois, setMois] = useState(() => { const d = new Date(); return new Date(d.getFullYear(), d.getMonth(), 1); });
+  const [choix, setChoix] = useState<Item | null>(null);
+  useEffect(() => { api<{ items: AgendaEv[]; configure: boolean }>("/api/admin/agenda").then(setAg).catch(() => setAg({ items: [], configure: true })); }, []);
+  const loc = (iso: string) => { const d = new Date(iso); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+  const items: Item[] = ([
+    ...(ag?.items ?? []).map((e): Item => {
+      const jour = e.journee ? e.debut.slice(0, 10) : loc(e.debut);
+      const heure = e.journee ? undefined : new Date(e.debut).toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit" });
+      return { cle: "a" + e.uid, jour, heure, titre: e.titre, type: "agenda" as const, detail: [e.lieu, e.description].filter(Boolean).join(" · ") };
+    }),
+    ...taches.filter((t) => t.echeance && t.statut !== "fait").map((t) => ({ cle: "t" + t.id, jour: t.echeance!, titre: t.titre, type: "tache" as const, detail: t.responsable ? `Échéance · ${t.responsable}` : "Échéance", onClick: () => aller("taches") })),
+    ...comm.filter((c) => c.prochaine_date && !["refuse", "logo_recu"].includes(c.statut)).map((c) => ({ cle: "c" + c.id, jour: c.prochaine_date!, titre: `${c.prochaine_action || "Relance"} · ${c.entreprise}`, type: "relance" as const, detail: c.responsable, onClick: () => aller("commandites") })),
+  ] as Item[]).sort((a, b) => (a.jour + (a.heure ?? "")).localeCompare(b.jour + (b.heure ?? "")));
+
+  const premier = new Date(mois); premier.setDate(1 - premier.getDay()); // grille commence un dimanche
+  const cases = Array.from({ length: 42 }, (_, i) => { const d = new Date(premier); d.setDate(premier.getDate() + i); return d; });
+  const tj = today();
+  const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const aVenir = items.filter((x) => x.jour >= tj).slice(0, 12);
+
+  return (
+    <>
+      <div className="adm-bar-top">
+        <h1>Calendrier</h1>
+        <div className="adm-actions">
+          <span className="adm-legend"><i className="lg-agenda" />Agenda du club <i className="lg-tache" />Tâches <i className="lg-relance" />Relances</span>
+          <a className="adm-btn line" href="https://calendar.google.com/" target="_blank" rel="noopener">+ Événement (Google Agenda)</a>
+        </div>
+      </div>
+      {ag && !ag.configure && <p className="adm-alert" style={{ background: "#FFF4DE", color: "#7A4B00" }}>L’agenda Google n’est pas encore branché : ajoute le secret <b>GCAL_ICS_URL</b> dans Cloudflare. Les tâches et relances s’affichent déjà.</p>}
+      <div className="adm-cal-wrap">
+        <section className="adm-card adm-cal">
+          <header>
+            <button className="adm-btn line sm" onClick={() => setMois(new Date(mois.getFullYear(), mois.getMonth() - 1, 1))} aria-label="Mois précédent">←</button>
+            <h2>{MOIS_FR[mois.getMonth()]} {mois.getFullYear()}</h2>
+            <button className="adm-btn line sm" onClick={() => setMois(new Date(mois.getFullYear(), mois.getMonth() + 1, 1))} aria-label="Mois suivant">→</button>
+            <button className="adm-btn line sm" onClick={() => { const d = new Date(); setMois(new Date(d.getFullYear(), d.getMonth(), 1)); }}>Aujourd’hui</button>
+          </header>
+          <div className="adm-cal-grid">
+            {["dim", "lun", "mar", "mer", "jeu", "ven", "sam"].map((j) => <div key={j} className="adm-cal-dow">{j}</div>)}
+            {cases.map((d) => {
+              const k = iso(d);
+              const du = items.filter((x) => x.jour === k);
+              return (
+                <div key={k} className={"adm-cal-day" + (d.getMonth() !== mois.getMonth() ? " autre" : "") + (k === tj ? " auj" : "")}>
+                  <span className="n">{d.getDate()}</span>
+                  {du.slice(0, 3).map((x) => (
+                    <button key={x.cle} className={"adm-ev ev-" + x.type + (x.type !== "agenda" && x.jour < tj ? " late" : "")} onClick={() => setChoix(x)} title={x.titre}>
+                      {x.heure && <b>{x.heure}</b>}{x.titre}
+                    </button>
+                  ))}
+                  {du.length > 3 && <span className="adm-more">+{du.length - 3}</span>}
+                </div>
+              );
+            })}
+          </div>
+        </section>
+        <aside className="adm-card adm-upcoming">
+          <h2>À venir</h2>
+          {ag === null && <p className="adm-muted">Chargement de l’agenda…</p>}
+          {aVenir.map((x) => (
+            <button key={x.cle} className="adm-up" onClick={() => setChoix(x)}>
+              <span className={"dot ev-" + x.type} />
+              <span className="adm-date">{dateFr(x.jour)}{x.heure ? ` · ${x.heure}` : ""}</span>
+              <span className="ti">{x.titre}</span>
+            </button>
+          ))}
+          {ag && !aVenir.length && <p className="adm-muted">Rien de prévu.</p>}
+        </aside>
+      </div>
+      {choix && (
+        <Tiroir titre={choix.type === "agenda" ? "Événement" : choix.type === "tache" ? "Échéance" : "Relance"} fermer={() => setChoix(null)}>
+          <div className="adm-form">
+            <p className="adm-date">{new Date(choix.jour + "T12:00:00").toLocaleDateString("fr-CA", { weekday: "long", day: "numeric", month: "long" })}{choix.heure ? ` · ${choix.heure}` : ""}</p>
+            <h3 style={{ font: "italic 800 26px/1.1 var(--ft)", textTransform: "uppercase", color: "var(--navy)" }}>{choix.titre}</h3>
+            {choix.detail && <p style={{ whiteSpace: "pre-wrap", lineHeight: 1.5 }}>{choix.detail}</p>}
+            <div className="adm-form-actions">
+              {choix.onClick ? <button className="adm-btn" onClick={() => { setChoix(null); choix.onClick!(); }}>Ouvrir {choix.type === "tache" ? "les tâches" : "les commanditaires"}</button>
+                : <a className="adm-btn" href="https://calendar.google.com/" target="_blank" rel="noopener">Ouvrir Google Agenda</a>}
+            </div>
+          </div>
+        </Tiroir>
+      )}
+    </>
   );
 }
 
